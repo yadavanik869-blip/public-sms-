@@ -1,32 +1,39 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Public SMS App</title>
-    <!-- Firebase की लाइब्रेरी -->
+    <!-- Firebase Libraries -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <style>
         * { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; font-family: sans-serif; background: #e5edd8; height: 100%; overflow: hidden; overscroll-behavior-y: none; }
         
-        #login-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 9999; }
-        .modal-box { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
-        .modal-box h2 { margin-top: 0; color: #0066ff; font-size: 24px; }
-        .modal-box input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; outline: none; }
-        .login-btn-group { display: flex; justify-content: space-between; margin-top: 15px; }
+        /* 3D Modern Modals */
+        .custom-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); display: none; justify-content: center; align-items: center; z-index: 9999; backdrop-filter: blur(3px); }
+        .modal-card { background: #ffffff; padding: 25px; border-radius: 16px; width: 90%; max-width: 360px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.3); animation: popIn 0.3s ease; }
+        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .modal-card h2 { margin-top: 0; color: #0066ff; font-size: 22px; font-weight: 800; }
+        .modal-card input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; outline: none; background: #f9f9f9; }
+        .modal-btn-group { display: flex; justify-content: space-between; margin-top: 15px; gap: 10px; }
+        .modal-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .btn-cancel { background: #6c757d; color: white; }
+        .btn-ok { background: #28a745; color: white; }
 
-        #admin-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 10000; }
-        .admin-box { background: #fff; width: 95%; max-width: 450px; height: 85vh; border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; }
-        .admin-header { background: #333; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
-        .admin-controls { padding: 10px; background: #eee; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; }
-        .admin-body { flex: 1; overflow-y: auto; padding: 15px; background: #f9f9f9; }
-        .user-card { background: white; padding: 10px; margin-bottom: 8px; border-radius: 6px; border: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
-                #password-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 10001; }
-        .pass-box { background: white; padding: 20px; border-radius: 10px; width: 90%; max-width: 320px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-        .pass-box input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; outline: none; }
-        .pass-btn-group { display: flex; justify-content: space-between; margin-top: 15px; }
+        /* Admin & 3D Chat History Modal */
+        #admin-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 10000; backdrop-filter: blur(5px); }
+        .admin-box { background: #fff; width: 95%; max-width: 450px; height: 85vh; border-radius: 14px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.6); }
+        .admin-header { background: #222; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 16px; }
+        .admin-controls { padding: 12px; background: #f1f1f1; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; }
+        .admin-body { flex: 1; overflow-y: auto; padding: 15px; background: #eef2f7; }
+        .user-card { background: white; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+                /* 3D User Chat History Viewer */
+        #user-chat-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 10005; backdrop-filter: blur(5px); }
+        .chat-viewer-box { background: #e5edd8; width: 95%; max-width: 450px; height: 85vh; border-radius: 14px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.6); }
+        .chat-viewer-header { background: #0066ff; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
+        .chat-viewer-body { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; }
 
         .app-header { position: fixed; top: 0; left: 0; width: 100%; background: #0066ff; color: white; padding: 10px 10px; display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: bold; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .btn-group { display: flex; gap: 4px; }
@@ -54,62 +61,81 @@
 </head>
 <body>
 
-    <div id="login-modal" style="display: none;">
-        <div class="modal-box">
-            <h2>💬 Public SMS</h2>
-            <p style="color: #555; font-size: 13px;">चैट में प्रवेश के लिए नाम और पासवर्ड दें:</p>
-            <input type="text" id="modalName" placeholder="अपना नाम दर्ज करें...">
-            <input type="password" id="modalAccessPass" placeholder="प्रवेश पासवर्ड दर्ज करें...">
-            <div class="login-btn-group">
-                <button onclick="cancelLogin()" style="background:#6c757d; color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; width:48%;">Cancel</button>
-                <button onclick="saveUserProfile()" style="background:#28a745; color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; width:48%;">OK</button>
+    <!-- 3D Login Modal -->
+    <div id="login-modal" class="custom-modal">
+        <div class="modal-card">
+            <h2>Public SMS 💬</h2>
+            <p style="color: #555; font-size: 13px; font-weight: bold;">Enter Name & Access Password:</p>
+            <input type="text" id="modalName" placeholder="Enter your name...">
+            <input type="password" id="modalAccessPass" placeholder="Enter access password...">
+            <div class="modal-btn-group">
+                <button class="modal-btn btn-cancel" onclick="cancelLogin()">Cancel</button>
+                <button class="modal-btn btn-ok" onclick="saveUserProfile()">OK</button>
             </div>
         </div>
     </div>
-        <div id="admin-modal">
+        <!-- 3D Admin Panel Modal -->
+    <div id="admin-modal">
         <div class="admin-box">
             <div class="admin-header">
-                <span>👑 ओनर कंट्रोल पैनल</span>
-                <button onclick="closeAdminPanel()" style="background:red; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">X</button>
+                <span>👑 Owner Control Panel</span>
+                <button onclick="closeAdminPanel()" style="background:red; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-weight:bold;">X</button>
             </div>
             <div class="admin-controls">
-                <span style="font-size:13px; font-weight:bold;">पासवर्ड सुरक्षा</span>
-                <button onclick="openPasswordModal()" style="background:#007bff; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px;">🔑 पासवर्ड बदलें</button>
+                <span style="font-size:13px; font-weight:bold;">Security Settings</span>
+                <button onclick="openPasswordModal()" style="background:#007bff; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">Change Password</button>
             </div>
             <div class="admin-body" id="admin-user-list">
-                <p style="text-align:center; color:#775;">यूज़र्स लोड हो रहे हैं...</p>
+                <p style="text-align:center; color:#775;">Loading Users...</p>
             </div>
         </div>
     </div>
 
-    <div id="password-modal">
-        <div class="pass-box">
-            <h3 style="margin-top:0; color:#333; font-size:16px;">नया पासवर्ड सेट करें</h3>
-            <input type="password" id="oldPassInput" placeholder="पुराना पासवर्ड डालें...">
-            <input type="password" id="newPassInput" placeholder="नया पासवर्ड डालें...">
-            <div class="pass-btn-group">
-                <button onclick="closePasswordModal()" style="background:#6c757d; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer;">Cancel</button>
-                <button onclick="confirmChangePassword()" style="background:#28a745; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer;">OK</button>
+    <!-- 3D User Chat History Viewer Modal -->
+    <div id="user-chat-modal">
+        <div class="chat-viewer-box">
+            <div class="chat-viewer-header">
+                <span id="chat-viewer-title">User Chats</span>
+                <button onclick="closeUserChatModal()" style="background:red; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-weight:bold;">X</button>
+            </div>
+            <div class="chat-viewer-body" id="chat-viewer-content">
+                <!-- Colorful 3D chat messages will render here -->
             </div>
         </div>
     </div>
 
+    <!-- 3D Password Change Modal -->
+    <div id="password-modal" class="custom-modal">
+        <div class="modal-card">
+            <h2>Change Password 🔑</h2>
+            <input type="password" id="oldPassInput" placeholder="Enter old password...">
+            <input type="password" id="newPassInput" placeholder="Enter new password...">
+            <div class="modal-btn-group">
+                <button class="modal-btn btn-cancel" onclick="closePasswordModal()">Cancel</button>
+                <button class="modal-btn btn-ok" onclick="confirmChangePassword()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top App Header -->
     <div class="app-header">
         <span>Public SMS 💬</span>
         <div class="btn-group">
-            <button class="action-btn owner-btn" onclick="openAdminPanel()">👑 ओनर</button>
+            <button class="action-btn owner-btn" onclick="openAdminPassPrompt()">👑 Owner</button>
             <button class="action-btn profile-btn" onclick="openProfileModal()">⚙️</button>
             <button class="action-btn" onclick="clearLocalChat()">🗑️</button>
         </div>
     </div>
     
+    <!-- Input Box -->
     <div class="input-container">
-        <input type="text" id="userInputMsg" placeholder="संदेश यहाँ लिखें... 🤖" onkeypress="checkEnter(event)">
+        <input type="text" id="userInputMsg" placeholder="Type message here... 🤖" onkeypress="checkEnter(event)">
         <button onclick="sendChatMessage()">SEND</button>
     </div>
 
+    <!-- Chat Box -->
     <div id="chat-history-box">
-        <div style="color: gray; text-align: center; margin-top: 20px;">चैट शुरू करने के लिए मैसेज भेजें... 🤖✨</div>
+        <div style="color: gray; text-align: center; margin-top: 20px;">Loading chat... 🤖✨</div>
     </div>
 
     <script>
@@ -130,7 +156,8 @@
         if (!myName) {
             document.getElementById("login-modal").style.display = "flex";
         }
-                const firebaseConfig = {
+
+        const firebaseConfig = {
             apiKey: "AIzaSyDjceMDUUBHUuCebJUXZl-z-wyAdqdUpdY",
             authDomain: "public-sms.firebaseapp.com",
             projectId: "public-sms",
@@ -142,9 +169,8 @@
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-
-        function cancelLogin() {
-            alert("प्रवेश रद्द कर दिया गया है!");
+                function cancelLogin() {
+            alert("Access cancelled!");
             window.location.href = "about:blank";
         }
 
@@ -154,12 +180,12 @@
             let currentOwnerPass = localStorage.getItem("owner_secret_pass");
 
             if (nameInput === "") {
-                alert("कृपया अपना नाम दर्ज करें!");
+                alert("Please enter your name!");
                 return;
             }
 
             if (passInput !== currentOwnerPass) {
-                alert("गलत प्रवेश पासवर्ड! कृपया सही पासवर्ड दर्ज करें।");
+                alert("Incorrect Access Password! Please try again.");
                 return;
             }
 
@@ -176,21 +202,21 @@
                 document.getElementById("login-modal").style.display = "none";
                 location.reload();
             }).catch((error) => {
-                console.error("यूज़र सेव करने में त्रुटि: ", error);
+                console.error("Error saving user: ", error);
             });
         }
 
         function openProfileModal() {
-            let passVerify = prompt("नाम बदलने के लिए प्रवेश पासवर्ड दर्ज करें:");
+            let passVerify = prompt("Enter access password to change name:");
             let currentOwnerPass = localStorage.getItem("owner_secret_pass");
 
             if (passVerify !== currentOwnerPass) {
-                alert("गलत पासवर्ड! नाम नहीं बदला जा सकता।");
+                alert("Incorrect password! Name cannot be changed.");
                 return;
             }
 
             let currentName = myName || "";
-            let newName = prompt("अपना नया नाम दर्ज करें:", currentName);
+            let newName = prompt("Enter your new name:", currentName);
             
             if (newName && newName.trim() !== "") {
                 localStorage.setItem("user_profile_name", newName.trim());
@@ -203,20 +229,20 @@
                     status: "Active",
                     joinedAt: firebase.firestore.FieldValue.serverTimestamp()
                 }).then(() => {
-                    alert("प्रोफाइल अपडेट और ओनर लिस्ट में सेव हो गई है!");
+                    alert("Profile updated and saved successfully!");
                     location.reload();
                 });
             }
         }
 
-        function openAdminPanel() {
-            let pass = prompt("वेबसाइट ओनर पासवर्ड दर्ज करें:");
+        function openAdminPassPrompt() {
+            let pass = prompt("Enter Website Owner Password:");
             let savedPass = localStorage.getItem("owner_secret_pass");
             if (pass === savedPass) {
                 document.getElementById("admin-modal").style.display = "flex";
                 loadAdminUsers();
             } else if (pass !== null) {
-                alert("गलत पासवर्ड!");
+                alert("Incorrect Password!");
             }
         }
 
@@ -240,16 +266,16 @@
             let savedPass = localStorage.getItem("owner_secret_pass");
 
             if (oldP !== savedPass) {
-                alert("पुराना पासवर्ड गलत है!");
+                alert("Old password is incorrect!");
                 return;
             }
             if (newP.trim() === "") {
-                alert("नया पासवर्ड खाली नहीं हो सकता!");
+                alert("New password cannot be empty!");
                 return;
             }
 
             localStorage.setItem("owner_secret_pass", newP.trim());
-            alert("पासवर्ड सफलतापूर्वक बदल दिया गया है!");
+            alert("Password successfully changed!");
             closePasswordModal();
         }
 
@@ -258,7 +284,7 @@
             db.collection("app_users").orderBy("joinedAt", "desc").get().then((snapshot) => {
                 listDiv.innerHTML = "";
                 if(snapshot.empty) {
-                    listDiv.innerHTML = "<p>कोई यूजर रजिस्टर नहीं है।</p>";
+                    listDiv.innerHTML = "<p>No users registered yet.</p>";
                     return;
                 }
                 snapshot.forEach((doc) => {
@@ -274,8 +300,8 @@
                                 <span style="font-size:10px; color:${isBlocked?'red':'green'}">Status: ${u.status || 'Active'}</span>
                             </div>
                             <div style="display:flex; gap:5px;">
-                                <button onclick="toggleBlockUser('${doc.id}', '${u.status}')" style="background:${btnColor}; color:white; border:none; padding:5px 8px; border-radius:4px; cursor:pointer;">${btnText}</button>
-                                <button onclick="viewUserChats('${u.fullProfile}')" style="background:#007bff; color:white; border:none; padding:5px 8px; border-radius:4px; cursor:pointer;">Chats 👁️</button>
+                                <button onclick="toggleBlockUser('${doc.id}', '${u.status}')" style="background:${btnColor}; color:white; border:none; padding:5px 8px; border-radius:4px; cursor:pointer; font-weight:bold;">${btnText}</button>
+                                <button onclick="viewUserChats3D('${u.fullProfile}')" style="background:#007bff; color:white; border:none; padding:5px 8px; border-radius:4px; cursor:pointer; font-weight:bold;">Chats 👁️</button>
                             </div>
                         </div>
                     `;
@@ -292,25 +318,46 @@
             });
         }
 
-        function viewUserChats(userProfileName) {
+        // 3D Colorful Chat Viewer Modal Logic for Owner
+        function viewUserChats3D(userProfileName) {
+            document.getElementById("chat-viewer-title").innerText = `${userProfileName} - Live Chats`;
+            let contentBox = document.getElementById("chat-viewer-content");
+            contentBox.innerHTML = "<p style='text-align:center;'>Loading chats...</p>";
+            document.getElementById("user-chat-modal").style.display = "flex";
+
             db.collection("universal_apps_data").where("sender", "==", userProfileName).get().then((snapshot) => {
-                let chatHistoryText = `=== ${userProfileName} के संदेश ===\n\n`;
+                contentBox.innerHTML = "";
                 if(snapshot.empty) {
-                    alert("इस यूजर का कोई संदेश नहीं है।");
+                    contentBox.innerHTML = "<p style='text-align:center; color:#775; margin-top:30px;'>No messages found for this user.</p>";
                     return;
                 }
                 snapshot.forEach((doc) => {
                     let d = doc.data();
-                    chatHistoryText += `- ${d.content} [ID: ${doc.id}]\n`;
+                    contentBox.innerHTML += `
+                        <div style="background:white; padding:10px 14px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1); border-left:4px solid #0066ff; display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <span style="font-size:11px; color:#555; font-weight:bold;">Message:</span>
+                                <div style="font-size:14px; color:#333; font-weight:bold; margin-top:2px;">${d.content}</div>
+                                <span style="font-size:9px; color:#888;">ID: ${doc.id}</span>
+                            </div>
+                            <button onclick="deleteSingleMessage('${doc.id}', '${userProfileName}')" style="background:#dc3545; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:11px; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.2);">Delete 🗑️</button>
+                        </div>
+                    `;
                 });
-                
-                let delId = prompt(chatHistoryText + "\nयदि आप कोई मैसेज डिलीट करना चाहते हैं, तो उसकी [ID] यहाँ डालें (अन्यथा खाली छोड़ें):");
-                if (delId && delId.trim() !== "") {
-                    db.collection("universal_apps_data").doc(delId.trim()).delete().then(() => {
-                        alert("संदेश सफलतापूर्वक डिलीट कर दिया गया है!");
-                    }).catch(err => alert("गलत आईडी या डिलीट करने में त्रुटि!"));
-                }
             });
+        }
+
+        function closeUserChatModal() {
+            document.getElementById("user-chat-modal").style.display = "none";
+        }
+
+        function deleteSingleMessage(msgId, userProfileName) {
+            if(confirm("Are you sure you want to delete this message?")) {
+                db.collection("universal_apps_data").doc(msgId).delete().then(() => {
+                    alert("Message deleted successfully!");
+                    viewUserChats3D(userProfileName);
+                }).catch(err => alert("Error deleting message!"));
+            }
         }
 
         const chatBox = document.getElementById("chat-history-box");
@@ -332,7 +379,7 @@
                 });
 
                 if (isBlocked) {
-                    alert("ओनर द्वारा आपको ब्लॉक कर दिया गया है, इसलिए आप संदेश नहीं भेज सकते!");
+                    alert("You have been blocked by the owner, you cannot send messages!");
                     return;
                 }
 
@@ -344,7 +391,7 @@
                 }).then(() => {
                     document.getElementById("userInputMsg").value = "";
                 }).catch((error) => {
-                    console.error("संदेश भेजने में त्रुटि: ", error);
+                    console.error("Error sending message: ", error);
                 });
             });
         }
@@ -388,7 +435,7 @@
                     let formattedTime = dateObj.toLocaleTimeString('hi-IN', optionsTime);
                     timeString = `${formattedDate}, ${formattedTime}`;
                 } else {
-                    timeString = "अभी-अभी";
+                    timeString = "Just now";
                 }
                 
                 chatBox.innerHTML += `
@@ -403,11 +450,11 @@
             });
 
             if(visibleCount === 0) {
-                chatBox.innerHTML = '<div style="color: gray; text-align: center; margin-top: 20px;">चैट शुरू करने के लिए मैसेज भेजें... 🤖✨</div>';
+                chatBox.innerHTML = '<div style="color: gray; text-align: center; margin-top: 20px;">No messages yet. Start chatting... 🤖✨</div>';
             }
             chatBox.scrollTop = chatBox.scrollHeight;
         }
     </script>
 </body>
 </html>
-        
+    
