@@ -23,6 +23,7 @@
         .modal-btn:active { transform: scale(0.96); }
         .btn-cancel { background: #6c757d; color: white; }
         .btn-ok { background: #28a745; color: white; }
+        .btn-delete { background: #dc3545; color: white; }
 
         /* 3D Admin Panel & Chat Viewer */
         #admin-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); display: none; justify-content: center; align-items: center; z-index: 10000; backdrop-filter: blur(8px); }
@@ -30,8 +31,8 @@
         .admin-header { background: linear-gradient(135deg, #222, #444); color: white; padding: 18px; display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 17px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .admin-controls { padding: 12px 18px; background: #e9ecef; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ced4da; }
         .admin-body { flex: 1; overflow-y: auto; padding: 15px; background: #f1f3f5; }
-        .user-card { background: white; padding: 14px; margin-bottom: 10px; border-radius: 12px; border: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-            #user-chat-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); display: none; justify-content: center; align-items: center; z-index: 10005; backdrop-filter: blur(8px); }
+        .user-card { background: white; padding: 14px; margin-bottom: 10px; border-radius: 12px; border: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); user-select: none; cursor: pointer; }
+                #user-chat-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); display: none; justify-content: center; align-items: center; z-index: 10005; backdrop-filter: blur(8px); }
         .chat-viewer-box { background: #e5edd8; width: 95%; max-width: 450px; height: 85vh; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
         .chat-viewer-header { background: linear-gradient(135deg, #0066ff, #0044cc); color: white; padding: 18px; display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .chat-viewer-body { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
@@ -52,7 +53,7 @@
         .my-row { align-items: flex-end; }
         .other-row { align-items: flex-start; }
 
-        .msg-bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; word-wrap: break-word; font-size: 14px; box-shadow: 0 3px 8px rgba(0,0,0,0.12); }
+        .msg-bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; word-wrap: break-word; font-size: 14px; box-shadow: 0 3px 8px rgba(0,0,0,0.12); user-select: none; }
         .my-msg { background: #dcf8c6; border-top-right-radius: 0; text-align: left; }
         .other-msg { background: #ffffff; border-top-left-radius: 0; text-align: left; }
         
@@ -103,6 +104,18 @@
         </div>
     </div>
 
+    <!-- 3D Custom Long-Press Profile Delete Confirmation Modal -->
+    <div id="custom-delete-modal" class="custom-modal" style="z-index: 11000;">
+        <div class="modal-card">
+            <h2>Delete Profile 🗑️</h2>
+            <p style="color: #555; font-size: 14px; font-weight: 700;">Do you want to permanently delete this user profile?</p>
+            <div class="modal-btn-group">
+                <button class="modal-btn btn-cancel" onclick="closeCustomDeleteModal()">Cancel</button>
+                <button class="modal-btn btn-delete" onclick="confirmCustomDeleteProfile()">Delete</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 3D Password Change Modal -->
     <div id="password-modal" class="custom-modal" style="z-index: 10500;">
         <div class="modal-card">
@@ -116,7 +129,7 @@
         </div>
     </div>
 
-    <!-- 3D Owner Password Prompt Modal (Replaces browser prompt) -->
+    <!-- 3D Owner Password Prompt Modal -->
     <div id="owner-pass-modal" class="custom-modal">
         <div class="modal-card">
             <h2>Owner Access 👑</h2>
@@ -129,7 +142,7 @@
         </div>
     </div>
 
-    <!-- 3D Profile Name Change Modal (Replaces browser prompt) -->
+    <!-- 3D Profile Name Change Modal -->
     <div id="profile-name-modal" class="custom-modal">
         <div class="modal-card">
             <h2>Edit Profile ⚙️</h2>
@@ -195,7 +208,24 @@
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-            function cancelLogin() {
+
+        // चेक करना कि क्या इस डिवाइस के यूजर की प्रोफाइल डेटाबेस से डिलीट कर दी गई है
+        if (myName) {
+            db.collection("app_users").where("name", "==", myName).get().then((snapshot) => {
+                let profileExists = false;
+                snapshot.forEach((doc) => {
+                    let data = doc.data();
+                    if (data.deviceId === myUniqueId) {
+                        profileExists = true;
+                    }
+                });
+                if (!profileExists && myName !== "Owner") {
+                    localStorage.removeItem("user_profile_name");
+                    document.getElementById("login-modal").style.display = "flex";
+                }
+            });
+        }
+                function cancelLogin() {
             alert("Access cancelled!");
             window.location.href = "about:blank";
         }
@@ -215,24 +245,28 @@
                 return;
             }
 
-            localStorage.setItem("user_profile_name", nameInput);
-            myName = nameInput;
-            
-            db.collection("app_users").add({
-                name: nameInput,
-                fullProfile: nameInput,
-                deviceId: myUniqueId,
-                status: "Active",
-                joinedAt: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
-                document.getElementById("login-modal").style.display = "none";
-                location.reload();
-            }).catch((error) => {
-                console.error("Error saving user: ", error);
+            db.collection("app_users").where("name", "==", nameInput).get().then((snapshot) => {
+                if (!snapshot.empty) {
+                    alert("This name is already taken! Please enter a different name or mix it up.");
+                    return;
+                }
+
+                localStorage.setItem("user_profile_name", nameInput);
+                myName = nameInput;
+                
+                db.collection("app_users").add({
+                    name: nameInput,
+                    fullProfile: nameInput,
+                    deviceId: myUniqueId,
+                    status: "Active",
+                    joinedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    document.getElementById("login-modal").style.display = "none";
+                    location.reload();
+                });
             });
         }
 
-        // 3D Profile Modal Handlers
         function openProfileModal() {
             document.getElementById("profilePassVerify").value = "";
             document.getElementById("profileNewName").value = myName || "";
@@ -258,22 +292,28 @@
                 return;
             }
 
-            localStorage.setItem("user_profile_name", newName);
-            myName = newName;
-            
-            db.collection("app_users").add({
-                name: newName,
-                fullProfile: newName,
-                deviceId: myUniqueId,
-                status: "Active",
-                joinedAt: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
-                alert("Profile updated and saved successfully!");
-                location.reload();
+            db.collection("app_users").where("name", "==", newName).get().then((snapshot) => {
+                if (!snapshot.empty) {
+                    alert("This name is already in use! Please choose a different name.");
+                    return;
+                }
+
+                localStorage.setItem("user_profile_name", newName);
+                myName = newName;
+                
+                db.collection("app_users").add({
+                    name: newName,
+                    fullProfile: newName,
+                    deviceId: myUniqueId,
+                    status: "Active",
+                    joinedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    alert("Profile updated and saved successfully!");
+                    location.reload();
+                });
             });
         }
 
-        // 3D Owner Password Modal Handlers
         function openOwnerPassModal() {
             document.getElementById("ownerPassInput").value = "";
             document.getElementById("owner-pass-modal").style.display = "flex";
@@ -329,6 +369,8 @@
             closePasswordModal();
         }
 
+        let selectedUserDocIdForDelete = null;
+
         function loadAdminUsers() {
             let listDiv = document.getElementById("admin-user-list");
             db.collection("app_users").orderBy("joinedAt", "desc").get().then((snapshot) => {
@@ -339,33 +381,55 @@
                 }
                 snapshot.forEach((doc) => {
                     let u = doc.data();
-                    let isBlocked = (u.status === "Blocked");
-                    let btnText = isBlocked ? "Unblock 🟢" : "Block 🔴";
-                    let btnColor = isBlocked ? "#28a745" : "#dc3545";
-
-                    listDiv.innerHTML += `
-                        <div class="user-card">
-                            <div>
-                                <b style="font-size:15px; color:#333;">${u.name || 'Unknown'}</b><br>
-                                <span style="font-size:11px; font-weight:bold; color:${isBlocked?'red':'green'}">Status: ${u.status || 'Active'}</span>
-                            </div>
-                            <div style="display:flex; gap:6px;">
-                                <button onclick="toggleBlockUser('${doc.id}', '${u.status}')" style="background:${btnColor}; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-weight:800; font-size:11px; box-shadow:0 2px 5px rgba(0,0,0,0.15);">${btnText}</button>
-                                <button onclick="viewUserChats3D('${u.fullProfile}')" style="background:#007bff; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-weight:800; font-size:11px; box-shadow:0 2px 5px rgba(0,123,255,0.3);">Chats 👁️</button>
-                            </div>
+                    let userCardDiv = document.createElement("div");
+                    userCardDiv.className = "user-card";
+                    userCardDiv.innerHTML = `
+                        <div>
+                            <b style="font-size:15px; color:#333;">${u.name || 'Unknown'}</b><br>
+                            <span style="font-size:10px; color:#888;">Long press (2-3s) to delete profile</span>
                         </div>
+                        <button onclick="viewUserChats3D('${u.fullProfile}')" style="background:#007bff; color:white; border:none; padding:7px 12px; border-radius:6px; cursor:pointer; font-weight:800; font-size:12px; box-shadow:0 2px 5px rgba(0,123,255,0.3);">Chats 👁️</button>
                     `;
+
+                    let pressTimer = null;
+                    userCardDiv.addEventListener("mousedown", () => {
+                        pressTimer = setTimeout(() => {
+                            selectedUserDocIdForDelete = doc.id;
+                            document.getElementById("custom-delete-modal").style.display = "flex";
+                        }, 2500);
+                    });
+                    userCardDiv.addEventListener("mouseup", () => clearTimeout(pressTimer));
+                    userCardDiv.addEventListener("mouseleave", () => clearTimeout(pressTimer));
+
+                    userCardDiv.addEventListener("touchstart", () => {
+                        pressTimer = setTimeout(() => {
+                            selectedUserDocIdForDelete = doc.id;
+                            document.getElementById("custom-delete-modal").style.display = "flex";
+                        }, 2500);
+                    });
+                    userCardDiv.addEventListener("touchend", () => clearTimeout(pressTimer));
+
+                    listDiv.appendChild(userCardDiv);
                 });
             });
         }
 
-        function toggleBlockUser(docId, currentStatus) {
-            let newStatus = (currentStatus === "Blocked") ? "Active" : "Blocked";
-            db.collection("app_users").doc(docId).update({
-                status: newStatus
-            }).then(() => {
-                loadAdminUsers();
-            });
+        function closeCustomDeleteModal() {
+            selectedUserDocIdForDelete = null;
+            document.getElementById("custom-delete-modal").style.display = "none";
+        }
+
+        function confirmCustomDeleteProfile() {
+            if (selectedUserDocIdForDelete) {
+                db.collection("app_users").doc(selectedUserDocIdForDelete).delete().then(() => {
+                    closeCustomDeleteModal();
+                    alert("User profile deleted permanently!");
+                    loadAdminUsers();
+                }).catch(err => {
+                    closeCustomDeleteModal();
+                    alert("Error deleting profile!");
+                });
+            }
         }
 
         function viewUserChats3D(userProfileName) {
@@ -383,12 +447,8 @@
                 snapshot.forEach((doc) => {
                     let d = doc.data();
                     contentBox.innerHTML += `
-                        <div style="background:white; padding:12px 16px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.08); border-left:5px solid #0066ff; display:flex; justify-content:space-between; align-items:center;">
-                            <div>
-                                <div style="font-size:15px; color:#222; font-weight:800; margin-bottom:2px;">${d.content}</div>
-                                <span style="font-size:10px; color:#888; font-weight:600;">ID: ${doc.id}</span>
-                            </div>
-                            <button onclick="deleteSingleMessage('${doc.id}', '${userProfileName}')" style="background:#dc3545; color:white; border:none; padding:7px 12px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:800; box-shadow:0 2px 6px rgba(220,53,69,0.3);">Delete 🗑️</button>
+                        <div style="background:white; padding:12px 16px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.08); border-left:5px solid #0066ff;">
+                            <div style="font-size:15px; color:#222; font-weight:800;">${d.content}</div>
                         </div>
                     `;
                 });
@@ -397,15 +457,6 @@
 
         function closeUserChatModal() {
             document.getElementById("user-chat-modal").style.display = "none";
-        }
-
-        function deleteSingleMessage(msgId, userProfileName) {
-            if(confirm("Are you sure you want to delete this message?")) {
-                db.collection("universal_apps_data").doc(msgId).delete().then(() => {
-                    alert("Message deleted successfully!");
-                    viewUserChats3D(userProfileName);
-                }).catch(err => alert("Error deleting message!"));
-            }
         }
 
         const chatBox = document.getElementById("chat-history-box");
@@ -420,27 +471,15 @@
             let textMsg = document.getElementById("userInputMsg").value;
             if (textMsg.trim() === "") return;
 
-            db.collection("app_users").where("name", "==", myName).get().then((querySnapshot) => {
-                let isBlocked = false;
-                querySnapshot.forEach((doc) => {
-                    if (doc.data().status === "Blocked") isBlocked = true;
-                });
-
-                if (isBlocked) {
-                    alert("You have been blocked by the owner, you cannot send messages!");
-                    return;
-                }
-
-                db.collection("universal_apps_data").add({
-                    sender: myName,
-                    deviceId: myUniqueId,
-                    content: textMsg,
-                    time: firebase.firestore.FieldValue.serverTimestamp()
-                }).then(() => {
-                    document.getElementById("userInputMsg").value = "";
-                }).catch((error) => {
-                    console.error("Error sending message: ", error);
-                });
+            db.collection("universal_apps_data").add({
+                sender: myName,
+                deviceId: myUniqueId,
+                content: textMsg,
+                time: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                document.getElementById("userInputMsg").value = "";
+            }).catch((error) => {
+                console.error("Error sending message: ", error);
             });
         }
 
