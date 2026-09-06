@@ -11,43 +11,35 @@
         * { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; font-family: sans-serif; background: #e5edd8; height: 100%; overflow: hidden; overscroll-behavior-y: none; }
         
-        /* सुरक्षित लॉगिन विंडो */
         #login-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 9999; }
         .modal-box { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
         .modal-box h2 { margin-top: 0; color: #0066ff; font-size: 24px; }
         .modal-box input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; outline: none; }
         .login-btn-group { display: flex; justify-content: space-between; margin-top: 15px; }
 
-        /* ओनर एडमिन पैनल मोडल */
         #admin-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 10000; }
         .admin-box { background: #fff; width: 95%; max-width: 450px; height: 85vh; border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; }
         .admin-header { background: #333; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
         .admin-controls { padding: 10px; background: #eee; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; }
         .admin-body { flex: 1; overflow-y: auto; padding: 15px; background: #f9f9f9; }
         .user-card { background: white; padding: 10px; margin-bottom: 8px; border-radius: 6px; border: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
-
-        /* पासवर्ड बदलने का कस्टम डायलॉग बॉक्स */
-        #password-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 10001; }
+                #password-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 10001; }
         .pass-box { background: white; padding: 20px; border-radius: 10px; width: 90%; max-width: 320px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
         .pass-box input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; outline: none; }
         .pass-btn-group { display: flex; justify-content: space-between; margin-top: 15px; }
 
-        /* टॉप हेडर बार */
         .app-header { position: fixed; top: 0; left: 0; width: 100%; background: #0066ff; color: white; padding: 10px 10px; display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: bold; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .btn-group { display: flex; gap: 4px; }
         .action-btn { background: #ff4d4d; color: white; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; }
         .profile-btn { background: #28a745; }
         .owner-btn { background: #ffc107; color: #000; }
 
-        /* इनपुट और सेंड बॉक्स */
         .input-container { position: fixed; top: 48px; left: 0; width: 100%; background: #ffffff; padding: 8px 15px; display: flex; gap: 10px; border-bottom: 1px solid #ccc; z-index: 999; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .input-container input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; outline: none; }
         .input-container button { background: #007bff; color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 14px; }
 
-        /* चैट इतिहास बॉक्स - यहाँ स्क्रॉलिंग चालू है */
         #chat-history-box { position: absolute; top: 105px; bottom: 0; left: 0; width: 100%; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; padding-bottom: 20px; }
 
-        /* चैट बबल्स - सही अलाइनमेंट */
         .msg-container { display: flex; flex-direction: column; width: 100%; margin-bottom: 4px; }
         .my-row { align-items: flex-end; }
         .other-row { align-items: flex-start; }
@@ -62,7 +54,6 @@
 </head>
 <body>
 
-    <!-- सुरक्षित लॉगिन विंडो -->
     <div id="login-modal" style="display: none;">
         <div class="modal-box">
             <h2>💬 Public SMS</h2>
@@ -75,9 +66,7 @@
             </div>
         </div>
     </div>
-
-    <!-- ओनर एडमिन पैनल विंडो -->
-    <div id="admin-modal">
+        <div id="admin-modal">
         <div class="admin-box">
             <div class="admin-header">
                 <span>👑 ओनर कंट्रोल पैनल</span>
@@ -93,7 +82,6 @@
         </div>
     </div>
 
-    <!-- पासवर्ड चेंज करने वाला कस्टम विंडो -->
     <div id="password-modal">
         <div class="pass-box">
             <h3 style="margin-top:0; color:#333; font-size:16px;">नया पासवर्ड सेट करें</h3>
@@ -106,7 +94,6 @@
         </div>
     </div>
 
-    <!-- टॉप हेडर और बटन्स -->
     <div class="app-header">
         <span>Public SMS 💬</span>
         <div class="btn-group">
@@ -116,15 +103,13 @@
         </div>
     </div>
     
-    <!-- इनपुट बॉक्स -->
     <div class="input-container">
         <input type="text" id="userInputMsg" placeholder="संदेश यहाँ लिखें... 🤖" onkeypress="checkEnter(event)">
         <button onclick="sendChatMessage()">SEND</button>
     </div>
 
-    <!-- चैट बॉक्स -->
     <div id="chat-history-box">
-        <div style="color: gray; text-align: center; margin-top: 20px;">चैट लोड हो रही है... 🤖✨</div>
+        <div style="color: gray; text-align: center; margin-top: 20px;">चैट शुरू करने के लिए मैसेज भेजें... 🤖✨</div>
     </div>
 
     <script>
@@ -145,9 +130,7 @@
         if (!myName) {
             document.getElementById("login-modal").style.display = "flex";
         }
-
-        // Firebase कॉन्फ़िगरेशन
-        const firebaseConfig = {
+                const firebaseConfig = {
             apiKey: "AIzaSyDjceMDUUBHUuCebJUXZl-z-wyAdqdUpdY",
             authDomain: "public-sms.firebaseapp.com",
             projectId: "public-sms",
@@ -352,6 +335,7 @@
                     alert("ओनर द्वारा आपको ब्लॉक कर दिया गया है, इसलिए आप संदेश नहीं भेज सकते!");
                     return;
                 }
+
                 db.collection("universal_apps_data").add({
                     sender: myName,
                     deviceId: myUniqueId,
@@ -399,4 +383,31 @@
                 if (data.time && data.time.toDate) {
                     let dateObj = data.time.toDate();
                     let optionsDate = { day: '2-digit', month: '2-digit', year: 'numeric' };
-                    let optionsTime = { hour: '2-digit', minute: '2-digit', ho
+                    let optionsTime = { hour: '2-digit', minute: '2-digit', hour12: true };
+                    let formattedDate = dateObj.toLocaleDateString('hi-IN', optionsDate);
+                    let formattedTime = dateObj.toLocaleTimeString('hi-IN', optionsTime);
+                    timeString = `${formattedDate}, ${formattedTime}`;
+                } else {
+                    timeString = "अभी-अभी";
+                }
+                
+                chatBox.innerHTML += `
+                    <div class="msg-container ${rowClass}">
+                        <div class="msg-bubble ${bubbleClass}">
+                            <span class="sender-name">${data.sender || 'Unknown'}</span>
+                            ${data.content}
+                            <span class="msg-time">${timeString}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if(visibleCount === 0) {
+                chatBox.innerHTML = '<div style="color: gray; text-align: center; margin-top: 20px;">चैट शुरू करने के लिए मैसेज भेजें... 🤖✨</div>';
+            }
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
+        
