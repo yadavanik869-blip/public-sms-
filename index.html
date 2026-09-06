@@ -12,32 +12,45 @@
         body { margin: 0; padding: 0; font-family: sans-serif; background: #e5edd8; }
         
         /* टॉप हेडर बार - हमेशा ऊपर फिक्स रहेगा */
-        .app-header { position: fixed; top: 0; left: 0; width: 100%; background: #0066ff; color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; font-size: 18px; font-weight: bold; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .delete-btn { background: #ff4d4d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold; }
-        
+        .app-header { position: fixed; top: 0; left: 0; width: 100%; background: #0066ff; color: white; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: bold; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .btn-group { display: flex; gap: 5px; }
+        .action-btn { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; }
+        .profile-btn { background: #28a745; color: white; }
+
         /* इनपुट और सेंड बॉक्स - टाइटल के ठीक नीचे हमेशा फिक्स रहेगा */
-        .input-container { position: fixed; top: 55px; left: 0; width: 100%; background: #ffffff; padding: 10px 15px; display: flex; gap: 10px; border-bottom: 1px solid #ccc; z-index: 999; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .input-container input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 15px; outline: none; }
-        .input-container button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 15px; }
+        .input-container { position: fixed; top: 48px; left: 0; width: 100%; background: #ffffff; padding: 8px 15px; display: flex; gap: 10px; border-bottom: 1px solid #ccc; z-index: 999; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .input-container input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; outline: none; }
+        .input-container button { background: #007bff; color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 14px; }
 
         /* चैट इतिहास बॉक्स - नीचे का सारा हिस्सा स्क्रॉल होगा */
-        #chat-history-box { margin-top: 120px; padding: 15px; display: flex; flex-direction: column; gap: 8px; min-height: calc(100vh - 120px); }
+        #chat-history-box { margin-top: 105px; padding: 15px; display: flex; flex-direction: column; gap: 10px; min-height: calc(100vh - 105px); padding-bottom: 20px; }
 
-        /* मैसेज बबल्स का डिज़ाइन */
-        .msg-bubble { background: #ffffff; padding: 8px 12px; border-radius: 6px; max-width: 75%; word-wrap: break-word; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        /* चैट बबल डिज़ाइन (आपका मैसेज दाईं तरफ, दूसरों का बाईं तरफ) */
+        .msg-container { display: flex; flex-direction: column; width: 100%; margin-bottom: 4px; }
+        .my-row { align-items: flex-end; }
+        .other-row { align-items: flex-start; }
+
+        .msg-bubble { max-width: 75%; padding: 8px 12px; border-radius: 8px; word-wrap: break-word; font-size: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .my-msg { background: #dcf8c6; border-top-right-radius: 0; text-align: left; }
+        .other-msg { background: #ffffff; border-top-left-radius: 0; text-align: left; }
+        
+        .sender-name { font-size: 12px; color: #0066ff; margin-bottom: 3px; font-weight: bold; display: block; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 2px; }
     </style>
 </head>
 <body>
 
-    <!-- टॉप हेडर और डिलीट बटन -->
+    <!-- टॉप हेडर और बटन्स -->
     <div class="app-header">
         <span>Public Live SMS App 💬</span>
-        <button class="delete-btn" onclick="clearAllMessagesDirectly()">🗑️ डिलीट</button>
+        <div class="btn-group">
+            <button class="action-btn profile-btn" onclick="changeUserProfile()">⚙️ प्रोफाइल</button>
+            <button class="action-btn" onclick="clearAllMessagesDirectly()">🗑️ डिलीट</button>
+        </div>
     </div>
     
     <!-- टाइटल के नीचे फिक्स रहने वाला सेंड और टाइपिंग बॉक्स -->
     <div class="input-container">
-        <input type="text" id="userInputMsg" placeholder="संदेश यहाँ लिखें... 🤖">
+        <input type="text" id="userInputMsg" placeholder="संदेश यहाँ लिखें... 🤖" onkeypress="checkEnter(event)">
         <button onclick="sendChatMessage()">SEND</button>
     </div>
 
@@ -47,6 +60,43 @@
     </div>
 
     <script>
+        // पहली बार आने पर नाम और नंबर पूछने का फंक्शन (कैंसिल करने पर बाहर कर देगा)
+        let myName = localStorage.getItem("user_profile_name");
+        let myPhone = localStorage.getItem("user_profile_phone");
+
+        if (!myName || myName.trim() === "") {
+            let enteredName = prompt("कृपया अपना नाम दर्ज करें:");
+            if (!enteredName || enteredName.trim() === "") {
+                alert("नाम दर्ज करना अनिवार्य है! आपको बाहर किया जा रहा है।");
+                window.location.href = "about:blank"; // वेबसाइट से बाहर करने के लिए
+            } else {
+                let enteredPhone = prompt("कृपया अपना मोबाइल नंबर दर्ज करें:");
+                if (!enteredPhone || enteredPhone.trim() === "") {
+                    alert("मोबाइल नंबर दर्ज करना अनिवार्य है! आपको बाहर किया जा रहा है।");
+                    window.location.href = "about:blank";
+                } else {
+                    myName = enteredName.trim() + " (" + enteredPhone.trim() + ")";
+                    localStorage.setItem("user_profile_name", myName);
+                    localStorage.setItem("user_profile_phone", enteredPhone.trim());
+                }
+            }
+        }
+
+        // प्रोफाइल बदलने का फंक्शन
+        function changeUserProfile() {
+            let newName = prompt("अपना नया नाम दर्ज करें:", myName.split(" (")[0]);
+            if (newName && newName.trim() !== "") {
+                let newPhone = prompt("अपना नया मोबाइल नंबर दर्ज करें:", myPhone || "");
+                if (newPhone && newPhone.trim() !== "") {
+                    myName = newName.trim() + " (" + newPhone.trim() + ")";
+                    myPhone = newPhone.trim();
+                    localStorage.setItem("user_profile_name", myName);
+                    localStorage.setItem("user_profile_phone", myPhone);
+                    alert("प्रोफाइल सफलतापूर्वक अपडेट हो गई है!");
+                }
+            }
+        }
+
         // आपका सुरक्षित Firebase कॉन्फ़िगरेशन
         const firebaseConfig = {
             apiKey: "AIzaSyDjceMDUUBHUuCebJUXZl-z-wyAdqdUpdY",
@@ -64,22 +114,41 @@
 
         const chatBox = document.getElementById("chat-history-box");
 
-        // मैसेज भेजने का फंक्शन
+        // एंटर की दबाने पर मैसेज भेजने के लिए
+        function checkEnter(e) {
+            if (e.key === 'Enter') {
+                sendChatMessage();
+            }
+        }
+
+        // मैसेज भेजने का फंक्शन + ऑटो बॉट रिप्लाई
         function sendChatMessage() {
             let textMsg = document.getElementById("userInputMsg").value;
             if (textMsg.trim() === "") return;
 
+            // यूजर का मैसेज डेटाबेस में भेजना
             db.collection("universal_apps_data").add({
+                sender: myName,
                 content: textMsg,
                 time: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
                 document.getElementById("userInputMsg").value = "";
+                
+                // ऑटो स्मार्ट बॉट का रिप्लाई
+                setTimeout(() => {
+                    db.collection("universal_apps_data").add({
+                        sender: "🤖 AI Bot",
+                        content: "नया संदेश प्राप्त हुआ: \"" + textMsg + "\" 🚀",
+                        time: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }, 1500);
+
             }).catch((error) => {
                 console.error("संदेश भेजने में त्रुटि: ", error);
             });
         }
 
-        // बिना किसी पॉप-अप के डायरेक्ट सारे मैसेज डिलीट करने का फंक्शन
+        // डायरेक्ट सारे मैसेज डिलीट करने का फंक्शन
         function clearAllMessagesDirectly() {
             db.collection("universal_apps_data").get().then((querySnapshot) => {
                 let batch = db.batch();
@@ -94,7 +163,7 @@
             });
         }
 
-        // डेटा को लाइव सिंक करने और दिखाने का फंक्शन
+        // डेटा को लाइव सिंक करना (नाम ऊपर, मैसेज नीचे)
         db.collection("universal_apps_data").orderBy("time")
             .onSnapshot((snapshot) => {
                 chatBox.innerHTML = "";
@@ -104,10 +173,21 @@
                 }
                 snapshot.forEach((doc) => {
                     let data = doc.data();
-                    chatBox.innerHTML += `<div class="msg-bubble">${data.content}</div>`;
+                    let isMine = (data.sender === myName);
+                    let rowClass = isMine ? "my-row" : "other-row";
+                    let bubbleClass = isMine ? "my-msg" : "other-msg";
+                    
+                    chatBox.innerHTML += `
+                        <div class="msg-container ${rowClass}">
+                            <div class="msg-bubble ${bubbleClass}">
+                                <span class="sender-name">${data.sender || 'Unknown'}</span>
+                                ${data.content}
+                            </div>
+                        </div>
+                    `;
                 });
+                window.scrollTo(0, document.body.scrollHeight);
             });
     </script>
 </body>
-    </html>
-    
+</html>
