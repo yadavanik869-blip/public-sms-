@@ -2,27 +2,26 @@
 <html lang="hi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Public Live SMS App</title>
-    <!-- Firebase की लाइब्रेरी -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <style>
         * { box-sizing: border-box; }
-        html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: sans-serif; background: #f0f2f5; }
+        html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: sans-serif; background: #f0f2f5; }
         
-        /* मुख्य स्क्रीन लेआउट - फ्लेक्सबॉक्स */
-        .app-wrapper { display: flex; flex-direction: column; height: 100vh; width: 100vw; }
+        /* मुख्य लेआउट */
+        .app-wrapper { display: flex; flex-direction: column; height: 100%; width: 100%; position: absolute; top: 0; left: 0; }
 
         /* टॉप हेडर बार - हमेशा ऊपर फिक्स रहेगा */
-        .app-header { background: #0066ff; color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; font-size: 18px; font-weight: bold; flex-shrink: 0; z-index: 10; }
+        .app-header { background: #0066ff; color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; font-size: 18px; font-weight: bold; height: 55px; flex-shrink: 0; z-index: 100; }
         .delete-btn { background: #ff4d4d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold; }
         
-        /* चैट इतिहास बॉक्स - केवल यही हिस्सा स्क्रॉल होगा */
+        /* चैट इतिहास बॉक्स - केवल यही हिस्सा बीच में स्क्रॉल होगा */
         #chat-history-box { flex: 1; overflow-y: auto; padding: 15px; background: #e5edd8; display: flex; flex-direction: column; gap: 8px; }
         
         /* नीचे फिक्स रहने वाला इनपुट और सेंड एरिया - कभी गायब नहीं होगा */
-        .input-container { background: #ffffff; padding: 10px 15px; display: flex; gap: 10px; border-top: 1px solid #ccc; flex-shrink: 0; z-index: 10; }
+        .input-container { background: #ffffff; padding: 10px 15px; display: flex; gap: 10px; border-top: 1px solid #ccc; height: 60px; flex-shrink: 0; z-index: 100; }
         .input-container input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 15px; outline: none; }
         .input-container button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 15px; }
 
@@ -33,18 +32,15 @@
 <body>
 
     <div class="app-wrapper">
-        <!-- टॉप हेडर और डिलीट बटन -->
         <div class="app-header">
             <span>Public Live SMS App 💬</span>
             <button class="delete-btn" onclick="clearAllMessagesDirectly()">🗑️ डिलीट</button>
         </div>
         
-        <!-- चैट इतिहास दिखाने वाला स्क्रॉल होने वाला एरिया -->
         <div id="chat-history-box">
             <div style="color: gray; text-align: center; margin-top: 50px;">चैट लोड हो रही है... 🤖✨</div>
         </div>
 
-        <!-- परमानेंट नीचे फिक्स रहने वाला सेंड और टाइपिंग बॉक्स -->
         <div class="input-container">
             <input type="text" id="userInputMsg" placeholder="संदेश यहाँ लिखें... 🤖">
             <button onclick="sendChatMessage()">SEND</button>
@@ -115,5 +111,4 @@
             });
     </script>
 </body>
-    </html>
-    
+</html>
