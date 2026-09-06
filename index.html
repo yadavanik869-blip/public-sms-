@@ -209,7 +209,6 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // चेक करना कि क्या इस डिवाइस के यूजर की प्रोफाइल डेटाबेस से डिलीट कर दी गई है
         if (myName) {
             db.collection("app_users").where("name", "==", myName).get().then((snapshot) => {
                 let profileExists = false;
@@ -381,14 +380,22 @@
                 }
                 snapshot.forEach((doc) => {
                     let u = doc.data();
+                    let isBlocked = (u.status === "Blocked");
+                    // यदि ब्लॉक है तो केवल Unblock बटन, अगर एक्टिव है तो केवल Block बटन दिखेगा
+                    let btnText = isBlocked ? "Unblock 🟢" : "Block 🔴";
+                    let btnColor = isBlocked ? "#28a745" : "#dc3545";
+
                     let userCardDiv = document.createElement("div");
                     userCardDiv.className = "user-card";
                     userCardDiv.innerHTML = `
                         <div>
                             <b style="font-size:15px; color:#333;">${u.name || 'Unknown'}</b><br>
-                            <span style="font-size:10px; color:#888;">Long press (2-3s) to delete profile</span>
+                            <span style="font-size:11px; font-weight:bold; color:${isBlocked?'red':'green'}">Status: ${u.status || 'Active'}</span>
                         </div>
-                        <button onclick="viewUserChats3D('${u.fullProfile}')" style="background:#007bff; color:white; border:none; padding:7px 12px; border-radius:6px; cursor:pointer; font-weight:800; font-size:12px; box-shadow:0 2px 5px rgba(0,123,255,0.3);">Chats 👁️</button>
+                        <div style="display:flex; gap:6px;">
+                            <button onclick="toggleBlockUser('${doc.id}', '${u.status}')" style="background:${btnColor}; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-weight:800; font-size:11px; box-shadow:0 2px 5px rgba(0,0,0,0.15);">${btnText}</button>
+                            <button onclick="viewUserChats3D('${u.fullProfile}')" style="background:#007bff; color:white; border:none; padding:7px 12px; border-radius:6px; cursor:pointer; font-weight:800; font-size:12px; box-shadow:0 2px 5px rgba(0,123,255,0.3);">Chats 👁️</button>
+                        </div>
                     `;
 
                     let pressTimer = null;
@@ -411,6 +418,15 @@
 
                     listDiv.appendChild(userCardDiv);
                 });
+            });
+        }
+
+        function toggleBlockUser(docId, currentStatus) {
+            let newStatus = (currentStatus === "Blocked") ? "Active" : "Blocked";
+            db.collection("app_users").doc(docId).update({
+                status: newStatus
+            }).then(() => {
+                loadAdminUsers();
             });
         }
 
@@ -471,15 +487,27 @@
             let textMsg = document.getElementById("userInputMsg").value;
             if (textMsg.trim() === "") return;
 
-            db.collection("universal_apps_data").add({
-                sender: myName,
-                deviceId: myUniqueId,
-                content: textMsg,
-                time: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
-                document.getElementById("userInputMsg").value = "";
-            }).catch((error) => {
-                console.error("Error sending message: ", error);
+            db.collection("app_users").where("name", "==", myName).get().then((querySnapshot) => {
+                let isBlocked = false;
+                querySnapshot.forEach((doc) => {
+                    if (doc.data().status === "Blocked") isBlocked = true;
+                });
+
+                if (isBlocked) {
+                    alert("You have been blocked by the owner, you cannot send messages!");
+                    return;
+                }
+
+                db.collection("universal_apps_data").add({
+                    sender: myName,
+                    deviceId: myUniqueId,
+                    content: textMsg,
+                    time: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    document.getElementById("userInputMsg").value = "";
+                }).catch((error) => {
+                    console.error("Error sending message: ", error);
+                });
             });
         }
 
