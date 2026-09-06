@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Public Live SMS App 🚀</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .chat-container {
+            width: 100%;
+            max-width: 450px;
+            height: 95vh;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+        }
+        .chat-header {
+            background: #0084ff;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #e5ddd5;
+        }
+        .message {
+            max-width: 75%;
+            padding: 10px 15px;
+            border-radius: 8px;
+            word-wrap: break-word;
+            font-size: 0.95rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .message .sender-name {
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #0084ff;
+            margin-bottom: 3px;
+            display: block;
+        }
+        .message .sender-phone {
+            font-size: 0.7rem;
+            color: #555;
+            margin-bottom: 3px;
+            display: block;
+        }
+        .message.incoming {
+            background: #ffffff;
+            align-self: flex-start;
+        }
+        .message.outgoing {
+            background: #dcf8c6;
+            align-self: flex-end;
+        }
+        .chat-input-area {
+            display: flex;
+            padding: 10px;
+            background: #f0f0f0;
+            border-top: 1px solid #ddd;
+        }
+        .chat-input-area input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            outline: none;
+            font-size: 0.95rem;
+        }
+        .chat-input-area button {
+            background: #0084ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin-left: 8px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .chat-input-area button:hover {
+            background: #006ddb;
+        }
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-box {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            width: 85%;
+            max-width: 320px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        .modal-box h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .modal-box input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            outline: none;
+        }
+        .modal-box button {
+            width: 100%;
+            padding: 10px;
+            background: #0084ff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <!-- User Details Popup Modal -->
+    <div class="modal-overlay" id="userModal">
+        <div class="modal-box">
+            <h3>Welcome! 🚀</h3>
+            <input type="text" id="popupName" placeholder="Enter your name..." />
+            <input type="text" id="popupPhone" placeholder="Enter your mobile number..." />
+            <button onclick="saveUserInfo()">Start Chat</button>
+        </div>
+    </div>
+
+    <div class="chat-container">
+        <div class="chat-header">
+            Public Live SMS App 💬
+        </div>
+        
+        <div class="chat-messages" id="messageBox">
+            <!-- Live messages will appear here -->
+        </div>
+
+        <div class="chat-input-area">
+            <input type="text" id="userInput" placeholder="Type a message..." />
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+
+        // आपकी नई और असली Firebase कॉन्फिग यहाँ पूरी तरह जुड़ चुकी है
+        const firebaseConfig = {
+            apiKey: "AIzaSyDjceMDUUBHUuCebJUXZl-z-wyAdqdUpdY",
+            authDomain: "public-sms.firebaseapp.com",
+            projectId: "public-sms",
+            storageBucket: "public-sms.firebasestorage.app",
+            messagingSenderId: "638514138207",
+            appId: "1:638514138207:web:0caa14eec9d4914e601fea",
+            measurementId: "G-2CTK3Z6J3B"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const analytics = getAnalytics(app);
+
+        window.onload = function() {
+            const savedName = localStorage.getItem('sms_user_name');
+            if (savedName) {
+                document.getElementById('userModal').style.display = 'none';
+            }
+        }
+
+        window.saveUserInfo = function() {
+            const name = document.getElementById('popupName').value.trim();
+            const phone = document.getElementById('popupPhone').value.trim();
+
+            if (name === "") {
+                alert("Please enter your name!");
+                return;
+            }
+
+            localStorage.setItem('sms_user_name', name);
+            localStorage.setItem('sms_user_phone', phone);
+            document.getElementById('userModal').style.display = 'none';
+        }
+
+        window.sendMessage = async function() {
+            const messageInput = document.getElementById('userInput');
+            const text = messageInput.value.trim();
+
+            if (text === "") return;
+
+            const name = localStorage.getItem('sms_user_name') || "Anonymous";
+            const phone = localStorage.getItem('sms_user_phone') || "";
+
+            try {
+                await addDoc(collection(db, "public_sms_messages"), {
+                    name: name,
+                    phone: phone,
+                    text: text,
+                    timestamp: serverTimestamp()
+                });
+                messageInput.value = "";
+            } catch (e) {
+                console.error("Error sending message: ", e);
+            }
+        }
+
+        const q = query(collection(db, "public_sms_messages"), orderBy("timestamp", "asc"));
+        onSnapshot(q, (snapshot) => {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.innerHTML = "";
+            
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const msgDiv = document.createElement('div');
+                msgDiv.classList.add('message');
+                
+                const currentUserName = localStorage.getItem('sms_user_name');
+                if (data.name === currentUserName) {
+                    msgDiv.classList.add('outgoing');
+                } else {
+                    msgDiv.classList.add('incoming');
+                }
+                
+                let phoneDisplay = data.phone ? `<span class="sender-phone">📱 ${data.phone}</span>` : '';
+                msgDiv.innerHTML = `<span class="sender-name">${data.name}</span>${phoneDisplay}${data.text}`;
+                messageBox.appendChild(msgDiv);
+            });
+            messageBox.scrollTop = messageBox.scrollHeight;
+        });
+    </script>
+</body>
+</html>
