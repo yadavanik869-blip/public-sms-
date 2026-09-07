@@ -30,14 +30,21 @@
         .user-card { background: white; padding: 14px; margin-bottom: 10px; border-radius: 12px; border: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
                 #user-chat-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); display: none; justify-content: center; align-items: center; z-index: 10005; backdrop-filter: blur(8px); }
         .chat-viewer-box { background: #e5edd8; width: 95%; max-width: 450px; height: 85vh; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
-        .chat-viewer-header { background: #0066ff; color: white; padding: 18px; display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 16px; }
-        .chat-viewer-body { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .chat-viewer-header { background: #0066ff; color: white; padding: 15px 18px; display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 15px; }
+        
+        .log-search-container { padding: 10px 15px; background: #f1f3f5; border-bottom: 1px solid #ddd; display: flex; gap: 8px; }
+        .log-search-container input { flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; outline: none; user-select: text; -webkit-user-select: text; }
 
-        .app-header { position: fixed; top: 0; left: 0; width: 100%; background: #0066ff; color: white; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: 800; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
-        .btn-group { display: flex; gap: 6px; }
-        .action-btn { background: #ff4d4d; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 800; }
+        .chat-viewer-body { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; }
+
+        .app-header { position: fixed; top: 0; left: 0; width: 100%; background: #0066ff; color: white; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 800; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
+        .btn-group { display: flex; gap: 5px; align-items: center; }
+        .action-btn { background: #ff4d4d; color: white; border: none; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 800; }
         .profile-btn { background: #28a745; }
         .owner-btn { background: #ffc107; color: #000; }
+        .private-btn { background: #6f42c1; color: white; position: relative; }
+
+        .notification-dot { position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; background: #ff3b30; border-radius: 50%; border: 2px solid white; display: none; }
 
         .input-container { position: fixed; top: 48px; left: 0; width: 100%; background: #ffffff; padding: 10px 15px; display: flex; gap: 10px; border-bottom: 1px solid #ccc; z-index: 999; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
         .input-container input { flex: 1; padding: 9px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; outline: none; user-select: text; -webkit-user-select: text; }
@@ -51,12 +58,14 @@
         .my-row { align-items: flex-end; }
         .other-row { align-items: flex-start; }
 
-        .msg-bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; word-wrap: break-word; font-size: 14px; box-shadow: 0 3px 8px rgba(0,0,0,0.12); cursor: pointer; }
+        .msg-bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; word-wrap: break-word; font-size: 14px; box-shadow: 0 3px 8px rgba(0,0,0,0.12); cursor: pointer; position: relative; padding-bottom: 22px; }
         .my-msg { background: #dcf8c6; border-top-right-radius: 0; text-align: left; }
         .other-msg { background: #ffffff; border-top-left-radius: 0; text-align: left; }
         
         .sender-name { font-size: 12px; color: #0066ff; margin-bottom: 3px; font-weight: 800; display: block; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 2px; }
-        .msg-time { font-size: 10px; color: #666; margin-top: 4px; text-align: right; display: block; }
+        .msg-time { font-size: 10px; color: #666; margin-top: 4px; display: inline-block; }
+        .msg-ticks { font-size: 11px; font-weight: bold; margin-left: 4px; display: inline-block; color: gray; }
+        .blue-tick { color: #34b7f1 !important; }
     </style>
 </head>
 <body>
@@ -65,8 +74,8 @@
         <div class="modal-card">
             <h2>Public SMS 💬</h2>
             <p style="color: #555; font-size: 13px; font-weight: 700;">Enter Name & Password:</p>
-            <input type="text" id="modalName" placeholder="Enter your name...">
-            <input type="password" id="modalAccessPass" placeholder="Enter password..." maxlength="4">
+            <input type="text" id="modalName" placeholder="Enter your name..." autocomplete="off">
+            <input type="password" id="modalAccessPass" placeholder="Enter password..." maxlength="4" autocomplete="new-password">
             <div class="modal-btn-group">
                 <button class="modal-btn btn-cancel" onclick="cancelLogin()">Cancel</button>
                 <button class="modal-btn btn-ok" onclick="saveUserProfile()">OK</button>
@@ -81,10 +90,97 @@
             </div>
             <div class="admin-controls">
                 <span style="font-size:13px; font-weight:800; color:#333;">Security Settings</span>
-                <button onclick="openPasswordModal()" style="background:#007bff; color:white; border:none; padding:7px 14px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:800;">Change Password</button>
+                <div style="display:flex; gap:6px;">
+                    <button onclick="openOwnerPrivateLogs()" style="background:#6f42c1; color:white; border:none; padding:7px 10px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:800;">🔒 Private Chats</button>
+                    <button onclick="openPasswordModal()" style="background:#007bff; color:white; border:none; padding:7px 10px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:800;">Password</button>
+                </div>
             </div>
             <div class="admin-body" id="admin-user-list">
                 <p style="text-align:center; color:#775; font-weight:600;">Loading Users...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="owner-private-logs-modal" class="custom-modal" style="z-index: 10500;">
+        <div class="admin-box">
+            <div class="admin-header" style="background: #6f42c1;">
+                <span>👑 Owner - All Private Chats</span>
+                <button onclick="closeOwnerPrivateLogs()" style="background:#dc3545; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:800;">✕</button>
+            </div>
+            <div class="admin-body" id="owner-private-logs-body">
+                <p style="text-align:center; color:#775; font-weight:600;">Loading private logs...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="private-user-list-modal" class="custom-modal">
+        <div class="admin-box" style="height: 75vh;">
+            <div class="admin-header" style="background: #6f42c1;">
+                <span>🔒 Private Chat Contacts</span>
+                <button onclick="closePrivateUserList()" style="background:#dc3545; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:800;">✕</button>
+            </div>
+            <div class="log-search-container">
+                <input type="text" id="privateSearchInput" placeholder="Search user by name..." oninput="filterPrivateUsers()" autocomplete="off">
+            </div>
+            <div class="admin-body" id="private-user-list-body">
+                <p style="text-align:center; color:#775; font-weight:600;">Loading users...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="private-chat-modal">
+        <div class="chat-viewer-box">
+            <div class="chat-viewer-header" style="background: #6f42c1; display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
+                <span id="private-chat-title" style="font-size: 15px; font-weight: 800;">Private Chat</span>
+                <span id="private-chat-status" style="font-size: 11px; font-weight: 600; color: #e2d9f3;">Offline</span>
+            </div>
+            <div style="position: absolute; top: 15px; right: 18px; z-index: 10;">
+                <button onclick="closePrivateChat()" style="background:#dc3545; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:800;">✕</button>
+            </div>
+            <div class="chat-viewer-body" id="private-chat-body" style="background: #fff;"></div>
+            <div style="padding: 10px 15px; background: #fff; display: flex; gap: 10px; border-top: 1px solid #ccc;">
+                <input type="text" id="privateMsgInput" placeholder="Type private message..." onkeypress="checkPrivateEnter(event)" autocomplete="off" style="flex:1; padding:9px 12px; border:1px solid #ccc; border-radius:6px; font-size:14px; outline:none; user-select:text; -webkit-user-select:text;">
+                <button onclick="sendPrivateMessage()" style="background:#6f42c1; color:white; border:none; padding:9px 18px; border-radius:6px; font-weight:800; cursor:pointer;">SEND</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- प्राइवेट चैट के लिए एडिट और डिलीट ऑप्शन मॉडल -->
+    <div id="private-action-modal" class="custom-modal" style="z-index: 11000;">
+        <div class="modal-card">
+            <h2>Private Options ⚙️</h2>
+            <p style="color: #555; font-size: 13px; font-weight: 700;">Choose an action for this message:</p>
+            <div class="modal-btn-group">
+                <button class="modal-btn btn-edit" onclick="openPrivateEditPrompt()">Edit</button>
+                <button class="modal-btn btn-delete" onclick="openPrivateDeleteChoiceModal()">Delete</button>
+            </div>
+            <div style="margin-top: 12px;">
+                <button class="modal-btn btn-cancel" onclick="closePrivateActionModal()" style="width: 100%;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- प्राइवेट चैट एडिट इनपुट मॉडल -->
+    <div id="private-edit-modal" class="custom-modal" style="z-index: 11500;">
+        <div class="modal-card">
+            <h2>Edit Private Message ✍️</h2>
+            <input type="text" id="editPrivateMsgInput" placeholder="Edit your message..." autocomplete="off">
+            <div class="modal-btn-group">
+                <button class="modal-btn btn-cancel" onclick="closePrivateEditModal()">Cancel</button>
+                <button class="modal-btn btn-ok" onclick="confirmEditPrivateMessage()">Update</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- प्राइवेट चैट डिलीट च्वाइस मॉडल -->
+    <div id="private-delete-choice-modal" class="custom-modal" style="z-index: 11500;">
+        <div class="modal-card">
+            <h2>Delete Message 🗑️</h2>
+            <p style="color: #555; font-size: 14px; font-weight: 700;">How do you want to delete this message?</p>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+                <button class="modal-btn btn-delete" onclick="deletePrivateMessageEveryone()">Delete for Everyone</button>
+                <button class="modal-btn btn-edit" onclick="deletePrivateMessageForMe()">Delete for Me</button>
+                <button class="modal-btn btn-cancel" onclick="closePrivateDeleteChoiceModal()">Cancel</button>
             </div>
         </div>
     </div>
@@ -95,7 +191,21 @@
                 <span id="chat-viewer-title">User Chats</span>
                 <button onclick="closeUserChatModal()" style="background:#dc3545; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:800;">✕</button>
             </div>
+            <div class="log-search-container">
+                <input type="text" id="logSearchInput" placeholder="Search by date (e.g. 07/09/2026)..." oninput="filterAuditLogs()" autocomplete="off">
+            </div>
             <div class="chat-viewer-body" id="chat-viewer-content"></div>
+        </div>
+    </div>
+
+    <div id="owner-delete-modal" class="custom-modal" style="z-index: 11000;">
+        <div class="modal-card">
+            <h2>Delete Log 🗑️</h2>
+            <p style="color: #555; font-size: 14px; font-weight: 700;">Do you want to permanently delete this chat record?</p>
+            <div class="modal-btn-group">
+                <button class="modal-btn btn-cancel" onclick="closeOwnerDeleteModal()">Cancel</button>
+                <button class="modal-btn btn-delete" onclick="confirmOwnerDeleteLog()">Delete</button>
+            </div>
         </div>
     </div>
 
@@ -116,7 +226,7 @@
     <div id="msg-edit-modal" class="custom-modal" style="z-index: 11500;">
         <div class="modal-card">
             <h2>Edit Message ✍️</h2>
-            <input type="text" id="editMsgInput" placeholder="Edit your message...">
+            <input type="text" id="editMsgInput" placeholder="Edit your message..." autocomplete="off">
             <div class="modal-btn-group">
                 <button class="modal-btn btn-cancel" onclick="closeMsgEditModal()">Cancel</button>
                 <button class="modal-btn btn-ok" onclick="confirmEditMessage()">Update</button>
@@ -127,7 +237,7 @@
     <div id="msg-delete-choice-modal" class="custom-modal" style="z-index: 11500;">
         <div class="modal-card">
             <h2>Delete Message 🗑️</h2>
-            <p style="color: #555; font-size: 13px; font-weight: 700;">How do you want to delete this message?</p>
+            <p style="color: #555; font-size: 14px; font-weight: 700;">How do you want to delete this message?</p>
             <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
                 <button class="modal-btn btn-delete" onclick="deleteMessageEveryone()">Delete for Everyone</button>
                 <button class="modal-btn btn-edit" onclick="deleteMessageForMe()">Delete for Me</button>
@@ -150,8 +260,8 @@
     <div id="password-modal" class="custom-modal" style="z-index: 10500;">
         <div class="modal-card">
             <h2>Change Owner Password 🔑</h2>
-            <input type="password" id="oldPassInput" placeholder="Enter old owner password...">
-            <input type="password" id="newPassInput" placeholder="Enter new owner password...">
+            <input type="password" id="oldPassInput" placeholder="Enter old owner password..." autocomplete="new-password">
+            <input type="password" id="newPassInput" placeholder="Enter new owner password..." autocomplete="new-password">
             <div class="modal-btn-group">
                 <button class="modal-btn btn-cancel" onclick="closePasswordModal()">Cancel</button>
                 <button class="modal-btn btn-ok" onclick="confirmChangePassword()">OK</button>
@@ -163,7 +273,7 @@
         <div class="modal-card">
             <h2>Owner Access 👑</h2>
             <p style="color: #555; font-size: 13px; font-weight: 700;">Enter Website Owner Password:</p>
-            <input type="password" id="ownerPassInput" placeholder="Enter owner password...">
+            <input type="password" id="ownerPassInput" placeholder="Enter owner password..." autocomplete="new-password">
             <div class="modal-btn-group">
                 <button class="modal-btn btn-cancel" onclick="closeOwnerPassModal()">Cancel</button>
                 <button class="modal-btn btn-ok" onclick="verifyOwnerPassword()">OK</button>
@@ -175,8 +285,8 @@
         <div class="modal-card">
             <h2>Edit Profile ⚙️</h2>
             <p style="color: #555; font-size: 13px; font-weight: 700;">Enter Owner Password & New Name:</p>
-            <input type="password" id="profilePassVerify" placeholder="Enter owner password...">
-            <input type="text" id="profileNewName" placeholder="Enter new name...">
+            <input type="password" id="profilePassVerify" placeholder="Enter owner password..." autocomplete="new-password">
+            <input type="text" id="profileNewName" placeholder="Enter new name..." autocomplete="off">
             <div class="modal-btn-group">
                 <button class="modal-btn btn-cancel" onclick="closeProfileModal()">Cancel</button>
                 <button class="modal-btn btn-ok" onclick="confirmProfileUpdate()">OK</button>
@@ -187,14 +297,15 @@
     <div class="app-header">
         <span>Public SMS 💬</span>
         <div class="btn-group">
-            <button class="action-btn owner-btn" onclick="openOwnerPassModal()">👑 Owner</button>
+            <button class="action-btn private-btn" onclick="openPrivateUserList()">🔒 Private <span id="notifDot" class="notification-dot"></span></button>
+            <button class="action-btn owner-btn" onclick="openOwnerPassModal()">👑</button>
             <button class="action-btn profile-btn" onclick="openProfileModal()">⚙️</button>
             <button class="action-btn" onclick="clearLocalChat()">🗑️</button>
         </div>
     </div>
     
     <div class="input-container">
-        <input type="text" id="userInputMsg" placeholder="Type message here... 🤖" onkeypress="checkEnter(event)">
+        <input type="text" id="userInputMsg" placeholder="Type message here... 🤖" onkeypress="checkEnter(event)" autocomplete="off">
         <button onclick="sendChatMessage()">SEND</button>
     </div>
 
@@ -227,7 +338,14 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // ओनर पासवर्ड को एंड-टू-एंड एन्क्रिप्टेड रूप में फायरबेस से सिंक करना
+        if (myName) {
+            setInterval(() => {
+                db.collection("online_presence").doc(myName).set({
+                    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+            }, 10000);
+        }
+
         db.collection("app_settings").doc("owner_config").get().then((doc) => {
             if (doc.exists && doc.data().password) {
                 try {
@@ -390,7 +508,6 @@
             document.getElementById("password-modal").style.display = "none";
         }
 
-        // पासवर्ड बदलते ही एंड-टू-एंड एन्क्रिप्ट होकर डेटाबेस पर सेव होगा और सभी फोन्स पर सिंक हो जाएगा
         function confirmChangePassword() {
             let oldP = document.getElementById("oldPassInput").value;
             let newP = document.getElementById("newPassInput").value;
@@ -411,6 +528,377 @@
             });
         }
                 let selectedUserDocIdForDelete = null;
+        let selectedOwnerLogId = null;
+        let activeAuditUser = null;
+        let globalCachedLogs = [];
+        let globalPrivateUsers = [];
+        let currentChatTargetUser = null;
+        let privateUnsubscribe = null;
+        let unreadSenderMap = {};
+        let onlineUsersMap = {};
+
+        let selectedPrivateMsgId = null;
+        let selectedPrivateMsgContent = null;
+        let hiddenPrivateMsgIds = JSON.parse(localStorage.getItem("hidden_priv_msg_ids")) || [];
+
+        db.collection("online_presence").onSnapshot((snapshot) => {
+            onlineUsersMap = {};
+            let now = Date.now();
+            snapshot.forEach((doc) => {
+                let data = doc.data();
+                if (data.lastSeen && data.lastSeen.toMillis) {
+                    let diff = now - data.lastSeen.toMillis();
+                    if (diff < 20000) {
+                        onlineUsersMap[doc.id] = true;
+                    }
+                }
+            });
+            if (currentChatTargetUser) {
+                updateChatHeaderStatus(currentChatTargetUser);
+            }
+        });
+
+        function updateChatHeaderStatus(targetUser) {
+            let statusEl = document.getElementById("private-chat-status");
+            if (statusEl) {
+                if (onlineUsersMap[targetUser]) {
+                    statusEl.innerText = "Online 🟢";
+                    statusEl.style.color = "#76ff03";
+                } else {
+                    statusEl.innerText = "Offline";
+                    statusEl.style.color = "#e2d9f3";
+                }
+            }
+        }
+
+        function openPrivateUserList() {
+            document.getElementById("privateSearchInput").value = "";
+            let listBody = document.getElementById("private-user-list-body");
+            listBody.innerHTML = "<p style='text-align:center; font-weight:600;'>Loading users...</p>";
+            document.getElementById("private-user-list-modal").style.display = "flex";
+
+            db.collection("app_users").get().then((snapshot) => {
+                globalPrivateUsers = [];
+                snapshot.forEach((doc) => {
+                    let u = doc.data();
+                    if (u.name && u.name !== myName) {
+                        globalPrivateUsers.push(u);
+                    }
+                });
+                renderPrivateUserList(globalPrivateUsers);
+            });
+        }
+
+        function closePrivateUserList() {
+            document.getElementById("private-user-list-modal").style.display = "none";
+        }
+
+        function filterPrivateUsers() {
+            let q = document.getElementById("privateSearchInput").value.trim().toLowerCase();
+            if (!q) {
+                renderPrivateUserList(globalPrivateUsers);
+                return;
+            }
+            let filtered = globalPrivateUsers.filter(u => u.name.toLowerCase().includes(q));
+            renderPrivateUserList(filtered);
+        }
+
+        function renderPrivateUserList(users) {
+            let listBody = document.getElementById("private-user-list-body");
+            listBody.innerHTML = "";
+            if (users.length === 0) {
+                listBody.innerHTML = "<p style='text-align:center; color:#775;'>No other users found.</p>";
+                return;
+            }
+            users.forEach(u => {
+                let card = document.createElement("div");
+                card.className = "user-card";
+                let unreadBadge = unreadSenderMap[u.name] ? `<span style="background:red; color:white; padding:2px 6px; border-radius:10px; font-size:10px; margin-left:6px;">New</span>` : '';
+                let isOnline = onlineUsersMap[u.name] ? `<span style="color:green; font-size:11px; font-weight:bold;">● Online</span>` : `<span style="color:gray; font-size:11px;">Offline</span>`;
+                
+                card.innerHTML = `
+                    <div>
+                        <b style="font-size:15px; color:#333;">${u.name}</b> ${unreadBadge}<br>
+                        ${isOnline}
+                    </div>
+                    <button style="background:#6f42c1; color:white; border:none; padding:7px 12px; border-radius:6px; font-weight:800; font-size:12px; cursor:pointer;">Chat 💬</button>
+                `;
+                card.onclick = () => {
+                    closePrivateUserList();
+                    openPrivateChatWindow(u.name);
+                };
+                listBody.appendChild(card);
+            });
+        }
+
+        function openPrivateChatWindow(targetUser) {
+            currentChatTargetUser = targetUser;
+            document.getElementById("private-chat-title").innerText = `Private Chat: ${targetUser}`;
+            updateChatHeaderStatus(targetUser);
+
+            let chatBody = document.getElementById("private-chat-body");
+            chatBody.innerHTML = "<p style='text-align:center; font-weight:600;'>Loading private chat...</p>";
+            document.getElementById("private-chat-modal").style.display = "flex";
+
+            if (privateUnsubscribe) privateUnsubscribe();
+
+            db.collection("private_messages")
+                .where("receiver", "==", myName)
+                .where("sender", "==", targetUser)
+                .where("read", "==", false)
+                .get().then((snapshot) => {
+                    snapshot.forEach((doc) => {
+                        db.collection("private_messages").doc(doc.id).update({ read: true });
+                    });
+                });
+
+            privateUnsubscribe = db.collection("private_messages")
+                .orderBy("time")
+                .onSnapshot((snapshot) => {
+                    chatBody.innerHTML = "";
+                    let count = 0;
+                    snapshot.forEach((doc) => {
+                        if (hiddenPrivateMsgIds.includes(doc.id)) return;
+
+                        let d = doc.data();
+                        let isRelevant = (d.sender === myName && d.receiver === targetUser) || (d.sender === targetUser && d.receiver === myName);
+                        if (!isRelevant) return;
+                        count++;
+
+                        let decryptedText = d.content;
+                        try {
+                            let bytes = CryptoJS.AES.decrypt(d.content, SECRET_ENC_KEY);
+                            let originalText = bytes.toString(CryptoJS.enc.Utf8);
+                            if (originalText) decryptedText = originalText;
+                        } catch(e) {}
+
+                        let isMine = (d.sender === myName);
+                        let rowClass = isMine ? "my-row" : "other-row";
+                        let bubbleClass = isMine ? "my-msg" : "other-msg";
+
+                        let ticksHtml = "";
+                        if (isMine) {
+                            if (d.read) {
+                                ticksHtml = `<span class="msg-ticks blue-tick" title="Read">✓✓</span>`;
+                            } else if (onlineUsersMap[targetUser]) {
+                                ticksHtml = `<span class="msg-ticks" title="Delivered">✓✓</span>`;
+                            } else {
+                                ticksHtml = `<span class="msg-ticks" title="Sent">✓</span>`;
+                            }
+                        }
+
+                        let timeString = "Just now";
+                        if (d.time && d.time.toDate) {
+                            let dt = d.time.toDate();
+                            timeString = `${dt.toLocaleDateString('hi-IN', {day:'2-digit', month:'2-digit'})}, ${dt.toLocaleTimeString('hi-IN', {hour:'2-digit', minute:'2-digit', hour12:true})}`;
+                        }
+
+                        let bubbleWrapper = document.createElement("div");
+                        bubbleWrapper.className = `msg-container ${rowClass}`;
+                        
+                        let bubbleEl = document.createElement("div");
+                        bubbleEl.className = `msg-bubble ${bubbleClass}`;
+                        bubbleEl.innerHTML = `
+                            <span class="sender-name">${d.sender}</span>
+                            ${decryptedText}
+                            <div style="float: right; margin-top: 4px; display: flex; align-items: center;">
+                                <span class="msg-time">${timeString}</span>
+                                ${ticksHtml}
+                            </div>
+                        `;
+
+                        // केवल अपने भेजे गए प्राइवेट मैसेज पर लॉन्ग-प्रेस (2.5 सेकंड) करने पर एडिट/डिलीट मेनू खुलेगा
+                        if (isMine) {
+                            let pressTimer = null;
+                            bubbleEl.addEventListener("mousedown", () => {
+                                pressTimer = setTimeout(() => openPrivateActionModal(doc.id, decryptedText), 2500);
+                            });
+                            bubbleEl.addEventListener("mouseup", () => clearTimeout(pressTimer));
+                            bubbleEl.addEventListener("mouseleave", () => clearTimeout(pressTimer));
+
+                            bubbleEl.addEventListener("touchstart", () => {
+                                pressTimer = setTimeout(() => openPrivateActionModal(doc.id, decryptedText), 2500);
+                            });
+                            bubbleEl.addEventListener("touchend", () => clearTimeout(pressTimer));
+                        }
+
+                        bubbleWrapper.appendChild(bubbleEl);
+                        chatBody.appendChild(bubbleWrapper);
+                    });
+
+                    if (count === 0) {
+                        chatBody.innerHTML = '<div style="color: gray; text-align: center; margin-top: 20px; font-weight: 600;">No private messages yet. Say hello! 👋</div>';
+                    }
+                    chatBody.scrollTop = chatBody.scrollHeight;
+                });
+        }
+
+        // प्राइवेट चैट एडिट और डिलीट हैंडlers
+        function openPrivateActionModal(msgId, content) {
+            selectedPrivateMsgId = msgId;
+            selectedPrivateMsgContent = content;
+            document.getElementById("private-action-modal").style.display = "flex";
+        }
+
+        function closePrivateActionModal() {
+            document.getElementById("private-action-modal").style.display = "none";
+        }
+
+        function openPrivateEditPrompt() {
+            closePrivateActionModal();
+            document.getElementById("editPrivateMsgInput").value = selectedPrivateMsgContent;
+            document.getElementById("private-edit-modal").style.display = "flex";
+        }
+
+        function closePrivateEditModal() {
+            document.getElementById("private-edit-modal").style.display = "none";
+        }
+
+        function confirmEditPrivateMessage() {
+            let updatedText = document.getElementById("editPrivateMsgInput").value.trim();
+            if (updatedText === "") return;
+
+            let encryptedUpdatedText = CryptoJS.AES.encrypt(updatedText, SECRET_ENC_KEY).toString();
+
+            db.collection("private_messages").doc(selectedPrivateMsgId).update({
+                content: encryptedUpdatedText
+            }).then(() => {
+                closePrivateEditModal();
+            });
+        }
+
+        function openPrivateDeleteChoiceModal() {
+            closePrivateActionModal();
+            document.getElementById("private-delete-choice-modal").style.display = "flex";
+        }
+
+        function closePrivateDeleteChoiceModal() {
+            document.getElementById("private-delete-choice-modal").style.display = "none";
+        }
+
+        function deletePrivateMessageEveryone() {
+            db.collection("private_messages").doc(selectedPrivateMsgId).delete().then(() => {
+                closePrivateDeleteChoiceModal();
+            });
+        }
+
+        function deletePrivateMessageForMe() {
+            if (selectedPrivateMsgId && !hiddenPrivateMsgIds.includes(selectedPrivateMsgId)) {
+                hiddenPrivateMsgIds.push(selectedPrivateMsgId);
+                localStorage.setItem("hidden_priv_msg_ids", JSON.stringify(hiddenPrivateMsgIds));
+            }
+            closePrivateDeleteChoiceModal();
+            location.reload();
+        }
+
+        function closePrivateChat() {
+            if (privateUnsubscribe) privateUnsubscribe();
+            currentChatTargetUser = null;
+            document.getElementById("private-chat-modal").style.display = "none";
+        }
+
+        function checkPrivateEnter(e) {
+            if (e.key === 'Enter') {
+                sendPrivateMessage();
+            }
+        }
+
+        function sendPrivateMessage() {
+            let msgInput = document.getElementById("privateMsgInput");
+            let textMsg = msgInput.value.trim();
+            if (textMsg === "" || !currentChatTargetUser) return;
+
+            let encryptedMsg = CryptoJS.AES.encrypt(textMsg, SECRET_ENC_KEY).toString();
+
+            db.collection("private_messages").add({
+                sender: myName,
+                receiver: currentChatTargetUser,
+                content: encryptedMsg,
+                read: false,
+                time: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                msgInput.value = "";
+            });
+        }
+
+        db.collection("private_messages")
+            .where("receiver", "==", myName)
+            .where("read", "==", false)
+            .onSnapshot((snapshot) => {
+                unreadSenderMap = {};
+                let hasUnread = false;
+                snapshot.forEach((doc) => {
+                    let d = doc.data();
+                    if (currentChatTargetUser !== d.sender) {
+                        hasUnread = true;
+                        unreadSenderMap[d.sender] = true;
+                    }
+                });
+                let dot = document.getElementById("notifDot");
+                if (dot) {
+                    dot.style.display = hasUnread ? "block" : "none";
+                }
+            });
+
+        function openOwnerPrivateLogs() {
+            let body = document.getElementById("owner-private-logs-body");
+            body.innerHTML = "<p style='text-align:center; font-weight:600;'>Loading all private chats...</p>";
+            document.getElementById("owner-private-logs-modal").style.display = "flex";
+
+            db.collection("private_messages").get().then((snapshot) => {
+                body.innerHTML = "";
+                if (snapshot.empty) {
+                    body.innerHTML = "<p style='text-align:center; color:#775;'>No private chats found.</p>";
+                    return;
+                }
+                let privLogs = [];
+                snapshot.forEach((doc) => {
+                    privLogs.push({ id: doc.id, ...doc.data() });
+                });
+
+                privLogs.sort((a, b) => {
+                    let t1 = a.time && a.time.toMillis ? a.time.toMillis() : 0;
+                    let t2 = b.time && b.time.toMillis ? b.time.toMillis() : 0;
+                    return t1 - t2;
+                });
+
+                privLogs.forEach((d) => {
+                    let decryptedMsg = d.content;
+                    try {
+                        let bytes = CryptoJS.AES.decrypt(d.content, SECRET_ENC_KEY);
+                        let originalText = bytes.toString(CryptoJS.enc.Utf8);
+                        if (originalText) decryptedMsg = originalText;
+                    } catch(e) {}
+
+                    let timeString = "";
+                    if (d.time && d.time.toDate) {
+                        let dt = d.time.toDate();
+                        timeString = `${dt.toLocaleDateString('hi-IN', {day:'2-digit', month:'2-digit'})}, ${dt.toLocaleTimeString('hi-IN', {hour:'2-digit', minute:'2-digit', hour12:true})}`;
+                    }
+
+                    body.innerHTML += `
+                        <div style="background:white; padding:12px; border-radius:10px; margin-bottom:8px; box-shadow:0 2px 6px rgba(0,0,0,0.05); border-left:5px solid #6f42c1; display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <b style="font-size:13px; color:#6f42c1;">${d.sender} ➔ ${d.receiver}</b>
+                                <div style="font-size:14px; color:#333; font-weight:bold; margin-top:2px;">${decryptedMsg}</div>
+                                <span style="font-size:10px; color:#666;">${timeString}</span>
+                            </div>
+                            <button onclick="deletePrivateLog('${d.id}')" style="background:#dc3545; color:white; border:none; padding:5px 8px; border-radius:6px; cursor:pointer; font-size:11px;">Delete 🗑️</button>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        function closeOwnerPrivateLogs() {
+            document.getElementById("owner-private-logs-modal").style.display = "none";
+        }
+
+        function deletePrivateLog(logId) {
+            db.collection("private_messages").doc(logId).delete().then(() => {
+                openOwnerPrivateLogs();
+            });
+        }
 
         function loadAdminUsers() {
             let listDiv = document.getElementById("admin-user-list");
@@ -457,101 +945,7 @@
                     });
                     userCardDiv.addEventListener("touchend", () => clearTimeout(pressTimer));
 
-                    listDiv.appendChild(userCardDiv);
-                });
-            });
-        }
-
-        function toggleBlockUser(docId, currentStatus) {
-            let newStatus = (currentStatus === "Blocked") ? "Active" : "Blocked";
-            db.collection("app_users").doc(docId).update({
-                status: newStatus
-            }).then(() => {
-                loadAdminUsers();
-            });
-        }
-
-        function closeCustomDeleteModal() {
-            selectedUserDocIdForDelete = null;
-            document.getElementById("custom-delete-modal").style.display = "none";
-        }
-
-        function confirmCustomDeleteProfile() {
-            if (selectedUserDocIdForDelete) {
-                db.collection("app_users").doc(selectedUserDocIdForDelete).delete().then(() => {
-                    closeCustomDeleteModal();
-                    loadAdminUsers();
-                });
-            }
-        }
-
-        function viewUserAuditLogs(userProfileName) {
-            document.getElementById("chat-viewer-title").innerText = `${userProfileName} - Permanent Logs`;
-            let contentBox = document.getElementById("chat-viewer-content");
-            contentBox.innerHTML = "<p style='text-align:center; font-weight:600;'>Loading audit logs...</p>";
-            document.getElementById("user-chat-modal").style.display = "flex";
-
-            db.collection("message_audit_logs").where("sender", "==", userProfileName).get().then((snapshot) => {
-                contentBox.innerHTML = "";
-                if(snapshot.empty) {
-                    contentBox.innerHTML = "<p style='text-align:center; color:#775; margin-top:30px; font-weight:600;'>No logs found for this user.</p>";
-                    return;
-                }
-                let logs = [];
-                snapshot.forEach((doc) => {
-                    logs.push({ id: doc.id, ...doc.data() });
-                });
-                
-                logs.sort((a, b) => {
-                    let t1 = a.loggedAt && a.loggedAt.toMillis ? a.loggedAt.toMillis() : 0;
-                    let t2 = b.loggedAt && b.loggedAt.toMillis ? b.loggedAt.toMillis() : 0;
-                    return t2 - t1;
-                });
-
-                logs.forEach((d) => {
-                    let decryptedMsg = d.messageContent;
-                    try {
-                        let bytes = CryptoJS.AES.decrypt(d.messageContent, SECRET_ENC_KEY);
-                        let originalText = bytes.toString(CryptoJS.enc.Utf8);
-                        if (originalText) decryptedMsg = originalText;
-                    } catch(e) {}
-
-                    let displayHtml = decryptedMsg;
-                    if (d.actionType === "EDITED" && d.oldMessage) {
-                        let decryptedOld = d.oldMessage;
-                        try {
-                            let bytesOld = CryptoJS.AES.decrypt(d.oldMessage, SECRET_ENC_KEY);
-                            let originalOld = bytesOld.toString(CryptoJS.enc.Utf8);
-                            if (originalOld) decryptedOld = originalOld;
-                        } catch(e) {}
-                        displayHtml = `<span style="color:#d9534f; text-decoration:line-through;">${decryptedOld}</span> &nbsp;➔&nbsp; <span style="color:#28a745;">${decryptedMsg}</span>`;
-                    }
-
-                    contentBox.innerHTML += `
-                        <div style="background:white; padding:12px 16px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.08); border-left:5px solid #28a745; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-                            <div>
-                                <span style="font-size:10px; color:${d.actionType==='EDITED'?'#007bff':'#d9534f'}; font-weight:bold;">[${d.actionType || 'SENT'}]</span>
-                                <div style="font-size:15px; color:#222; font-weight:800; margin-top:2px;">${displayHtml}</div>
-                            </div>
-                            <button onclick="deleteAuditLog('${d.id}', '${userProfileName}')" style="background:#dc3545; color:white; border:none; padding:5px 8px; border-radius:6px; cursor:pointer; font-size:11px; font-weight:bold;">Delete 🗑️</button>
-                        </div>
-                    `;
-                });
-            }).catch(err => {
-                contentBox.innerHTML = "<p style='text-align:center; color:red;'>Error loading logs.</p>";
-            });
-        }
-
-        function deleteAuditLog(logId, userProfileName) {
-            db.collection("message_audit_logs").doc(logId).delete().then(() => {
-                viewUserAuditLogs(userProfileName);
-            });
-        }
-
-        function closeUserChatModal() {
-            document.getElementById("user-chat-modal").style.display = "none";
-        }
-                let selectedMsgId = null;
+                    list        let selectedMsgId = null;
         let selectedMsgContent = null;
 
         function openMsgActionModal(msgId, content) {
@@ -747,3 +1141,4 @@
     </script>
 </body>
 </html>
+    
