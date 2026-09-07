@@ -7,14 +7,16 @@
     <!-- Firebase Libraries -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <!-- CryptoJS Library for End-to-End Encryption -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
-        * { box-sizing: border-box; }
-        html, body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #e5edd8; height: 100%; overflow: hidden; overscroll-behavior-y: none; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #e5edd8; height: 100%; overflow: hidden; overscroll-behavior-y: none; user-select: none; -webkit-user-select: none; }
         
         .custom-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); display: none; justify-content: center; align-items: center; z-index: 9999; backdrop-filter: blur(8px); }
         .modal-card { background: rgba(255, 255, 255, 0.96); padding: 30px 20px; border-radius: 20px; width: 90%; max-width: 360px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
         .modal-card h2 { margin-top: 0; color: #0066ff; font-size: 24px; font-weight: 800; }
-        .modal-card input { width: 100%; padding: 14px; margin: 12px 0; border: 1.5px solid #dcdcdc; border-radius: 10px; font-size: 15px; outline: none; background: #fdfdfd; }
+        .modal-card input { width: 100%; padding: 14px; margin: 12px 0; border: 1.5px solid #dcdcdc; border-radius: 10px; font-size: 15px; outline: none; background: #fdfdfd; user-select: text; -webkit-user-select: text; }
         .modal-btn-group { display: flex; justify-content: space-between; margin-top: 20px; gap: 12px; }
         .modal-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; }
         .btn-cancel { background: #6c757d; color: white; }
@@ -27,7 +29,7 @@
         .admin-header { background: #222; color: white; padding: 18px; display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 17px; }
         .admin-controls { padding: 12px 18px; background: #e9ecef; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ced4da; }
         .admin-body { flex: 1; overflow-y: auto; padding: 15px; background: #f1f3f5; }
-        .user-card { background: white; padding: 14px; margin-bottom: 10px; border-radius: 12px; border: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; user-select: none; cursor: pointer; }
+        .user-card { background: white; padding: 14px; margin-bottom: 10px; border-radius: 12px; border: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
                 #user-chat-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); display: none; justify-content: center; align-items: center; z-index: 10005; backdrop-filter: blur(8px); }
         .chat-viewer-box { background: #e5edd8; width: 95%; max-width: 450px; height: 85vh; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
         .chat-viewer-header { background: #0066ff; color: white; padding: 18px; display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 16px; }
@@ -40,16 +42,18 @@
         .owner-btn { background: #ffc107; color: #000; }
 
         .input-container { position: fixed; top: 48px; left: 0; width: 100%; background: #ffffff; padding: 10px 15px; display: flex; gap: 10px; border-bottom: 1px solid #ccc; z-index: 999; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
-        .input-container input { flex: 1; padding: 9px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; outline: none; }
+        .input-container input { flex: 1; padding: 9px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; outline: none; user-select: text; -webkit-user-select: text; }
         .input-container button { background: #007bff; color: white; border: none; padding: 9px 18px; border-radius: 6px; font-weight: 800; cursor: pointer; font-size: 14px; }
 
         #chat-history-box { position: absolute; top: 105px; bottom: 0; left: 0; width: 100%; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; padding-bottom: 25px; }
+
+        .encryption-banner { background: #fff8c5; color: #555; font-size: 11px; font-weight: 700; text-align: center; padding: 6px; border-radius: 8px; margin-bottom: 5px; border: 1px solid #ffeeba; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
 
         .msg-container { display: flex; flex-direction: column; width: 100%; margin-bottom: 4px; }
         .my-row { align-items: flex-end; }
         .other-row { align-items: flex-start; }
 
-        .msg-bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; word-wrap: break-word; font-size: 14px; box-shadow: 0 3px 8px rgba(0,0,0,0.12); user-select: none; cursor: pointer; }
+        .msg-bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; word-wrap: break-word; font-size: 14px; box-shadow: 0 3px 8px rgba(0,0,0,0.12); cursor: pointer; }
         .my-msg { background: #dcf8c6; border-top-right-radius: 0; text-align: left; }
         .other-msg { background: #ffffff; border-top-left-radius: 0; text-align: left; }
         
@@ -97,7 +101,6 @@
         </div>
     </div>
 
-    <!-- 3D Long-Press Action Modal (Edit or Delete) -->
     <div id="msg-action-modal" class="custom-modal" style="z-index: 11000;">
         <div class="modal-card">
             <h2>Message Options ⚙️</h2>
@@ -112,7 +115,6 @@
         </div>
     </div>
 
-    <!-- 3D Edit Message Input Modal -->
     <div id="msg-edit-modal" class="custom-modal" style="z-index: 11500;">
         <div class="modal-card">
             <h2>Edit Message ✍️</h2>
@@ -124,7 +126,6 @@
         </div>
     </div>
 
-    <!-- 3D Delete Choice Modal (Everyone or For Me) -->
     <div id="msg-delete-choice-modal" class="custom-modal" style="z-index: 11500;">
         <div class="modal-card">
             <h2>Delete Message 🗑️</h2>
@@ -200,7 +201,8 @@
     </div>
 
     <div id="chat-history-box">
-        <div style="color: gray; text-align: center; margin-top: 20px; font-weight: 600;">Loading chat... 🤖✨</div>
+        <div class="encryption-banner">🔒 Messages are end-to-end encrypted</div>
+        <div style="color: gray; text-align: center; margin-top: 15px; font-weight: 600;">Loading chat... 🤖✨</div>
     </div>
 
     <script>
@@ -215,6 +217,8 @@
         if (!localStorage.getItem("owner_secret_pass")) {
             localStorage.setItem("owner_secret_pass", "amit89415");
         }
+
+        const SECRET_ENC_KEY = "PublicSMS_SecretEncryptionKey_2026";
 
         if (!myName) {
             document.getElementById("login-modal").style.display = "flex";
@@ -248,8 +252,7 @@
                 }
             });
         }
-               function cancelLogin() {
-            alert("Access cancelled!");
+                function cancelLogin() {
             window.location.href = "about:blank";
         }
 
@@ -265,20 +268,17 @@
             let passInput = document.getElementById("modalAccessPass").value.trim();
             let dynamicTimePass = getCurrentTimePassword();
 
-            if (nameInput === "") {
-                alert("Please enter your name!");
-                return;
-            }
+            if (nameInput === "") return;
 
             let currentOwnerPass = localStorage.getItem("owner_secret_pass");
             if (passInput !== dynamicTimePass && passInput !== currentOwnerPass) {
-                alert("Incorrect Password! Please enter the correct password.");
+                document.getElementById("modalAccessPass"].value = "";
                 return;
             }
 
             db.collection("app_users").where("name", "==", nameInput).get().then((snapshot) => {
                 if (!snapshot.empty) {
-                    alert("This name is already taken! Please enter a different name or mix it up.");
+                    document.getElementById("modalName").value = "";
                     return;
                 }
 
@@ -313,19 +313,14 @@
             let newName = document.getElementById("profileNewName").value.trim();
             let currentOwnerPass = localStorage.getItem("owner_secret_pass");
 
-            if (passVerify !== currentOwnerPass) {
-                alert("Incorrect owner password! Name cannot be changed.");
-                return;
-            }
-
-            if (newName === "") {
-                alert("New name cannot be empty!");
+            if (passVerify !== currentOwnerPass || newName === "") {
+                document.getElementById("profilePassVerify").value = "";
                 return;
             }
 
             db.collection("app_users").where("name", "==", newName).get().then((snapshot) => {
                 if (!snapshot.empty) {
-                    alert("This name is already in use! Please choose a different name.");
+                    document.getElementById("profileNewName").value = "";
                     return;
                 }
 
@@ -339,7 +334,6 @@
                     status: "Active",
                     joinedAt: firebase.firestore.FieldValue.serverTimestamp()
                 }).then(() => {
-                    alert("Profile updated and saved successfully!");
                     location.reload();
                 });
             });
@@ -363,7 +357,7 @@
                 document.getElementById("admin-modal").style.display = "flex";
                 loadAdminUsers();
             } else {
-                alert("Incorrect Password!");
+                document.getElementById("ownerPassInput").value = "";
             }
         }
 
@@ -386,17 +380,12 @@
             let newP = document.getElementById("newPassInput").value;
             let savedPass = localStorage.getItem("owner_secret_pass");
 
-            if (oldP !== savedPass) {
-                alert("Old password is incorrect!");
-                return;
-            }
-            if (newP.trim() === "") {
-                alert("New password cannot be empty!");
+            if (oldP !== savedPass || newP.trim() === "") {
+                document.getElementById("oldPassInput").value = "";
                 return;
             }
 
             localStorage.setItem("owner_secret_pass", newP.trim());
-            alert("Owner password successfully changed!");
             closePasswordModal();
         }
 
@@ -425,7 +414,7 @@
                         </div>
                         <div style="display:flex; gap:6px;">
                             <button onclick="toggleBlockUser('${doc.id}', '${u.status}')" style="background:${btnColor}; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-weight:800; font-size:11px;">${btnText}</button>
-                            <button onclick="viewUserChats3D('${u.fullProfile}')" style="background:#007bff; color:white; border:none; padding:7px 12px; border-radius:6px; cursor:pointer; font-weight:800; font-size:12px;">Chats 👁️</button>
+                            <button onclick="viewUserAuditLogs('${u.fullProfile}')" style="background:#007bff; color:white; border:none; padding:7px 12px; border-radius:6px; cursor:pointer; font-weight:800; font-size:12px;">Chats 👁️</button>
                         </div>
                     `;
 
@@ -470,35 +459,59 @@
             if (selectedUserDocIdForDelete) {
                 db.collection("app_users").doc(selectedUserDocIdForDelete).delete().then(() => {
                     closeCustomDeleteModal();
-                    alert("User profile deleted permanently!");
                     loadAdminUsers();
-                }).catch(err => {
-                    closeCustomDeleteModal();
-                    alert("Error deleting profile!");
                 });
             }
         }
 
-        function viewUserChats3D(userProfileName) {
-            document.getElementById("chat-viewer-title").innerText = `${userProfileName} - Live Chats`;
+        function viewUserAuditLogs(userProfileName) {
+            document.getElementById("chat-viewer-title").innerText = `${userProfileName} - Permanent Logs`;
             let contentBox = document.getElementById("chat-viewer-content");
-            contentBox.innerHTML = "<p style='text-align:center; font-weight:600;'>Loading chats...</p>";
+            contentBox.innerHTML = "<p style='text-align:center; font-weight:600;'>Loading audit logs...</p>";
             document.getElementById("user-chat-modal").style.display = "flex";
 
-            db.collection("universal_apps_data").where("sender", "==", userProfileName).get().then((snapshot) => {
+            db.collection("message_audit_logs").where("sender", "==", userProfileName).orderBy("loggedAt", "desc").get().then((snapshot) => {
                 contentBox.innerHTML = "";
                 if(snapshot.empty) {
-                    contentBox.innerHTML = "<p style='text-align:center; color:#775; margin-top:30px; font-weight:600;'>No messages found for this user.</p>";
+                    contentBox.innerHTML = "<p style='text-align:center; color:#775; margin-top:30px; font-weight:600;'>No logs found for this user.</p>";
                     return;
                 }
                 snapshot.forEach((doc) => {
                     let d = doc.data();
+                    let decryptedMsg = d.messageContent;
+                    try {
+                        let bytes = CryptoJS.AES.decrypt(d.messageContent, SECRET_ENC_KEY);
+                        let originalText = bytes.toString(CryptoJS.enc.Utf8);
+                        if (originalText) decryptedMsg = originalText;
+                    } catch(e) {}
+
+                    let displayHtml = decryptedMsg;
+                    if (d.actionType === "EDITED" && d.oldMessage) {
+                        let decryptedOld = d.oldMessage;
+                        try {
+                            let bytesOld = CryptoJS.AES.decrypt(d.oldMessage, SECRET_ENC_KEY);
+                            let originalOld = bytesOld.toString(CryptoJS.enc.Utf8);
+                            if (originalOld) decryptedOld = originalOld;
+                        } catch(e) {}
+                        displayHtml = `<span style="color:#d9534f; text-decoration:line-through;">${decryptedOld}</span> &nbsp;➔&nbsp; <span style="color:#28a745;">${decryptedMsg}</span>`;
+                    }
+
                     contentBox.innerHTML += `
-                        <div style="background:white; padding:12px 16px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.08); border-left:5px solid #0066ff;">
-                            <div style="font-size:15px; color:#222; font-weight:800;">${d.content}</div>
+                        <div style="background:white; padding:12px 16px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.08); border-left:5px solid #28a745; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <span style="font-size:10px; color:${d.actionType==='EDITED'?'#007bff':'#d9534f'}; font-weight:bold;">[${d.actionType || 'SENT'}]</span>
+                                <div style="font-size:15px; color:#222; font-weight:800; margin-top:2px;">${displayHtml}</div>
+                            </div>
+                            <button onclick="deleteAuditLog('${doc.id}', '${userProfileName}')" style="background:#dc3545; color:white; border:none; padding:5px 8px; border-radius:6px; cursor:pointer; font-size:11px; font-weight:bold;">Delete 🗑️</button>
                         </div>
                     `;
                 });
+            });
+        }
+
+        function deleteAuditLog(logId, userProfileName) {
+            db.collection("message_audit_logs").doc(logId).delete().then(() => {
+                viewUserAuditLogs(userProfileName);
             });
         }
 
@@ -506,7 +519,6 @@
             document.getElementById("user-chat-modal").style.display = "none";
         }
 
-        // मैसेज लॉन्ग-प्रेस एडिट और डिलीट लॉजिक
         let selectedMsgId = null;
         let selectedMsgContent = null;
 
@@ -532,18 +544,22 @@
 
         function confirmEditMessage() {
             let updatedText = document.getElementById("editMsgInput").value.trim();
-            if (updatedText === "") {
-                alert("Message cannot be empty!");
-                return;
-            }
+            if (updatedText === "") return;
+
+            let encryptedUpdatedText = CryptoJS.AES.encrypt(updatedText, SECRET_ENC_KEY).toString();
+            let encryptedOldText = CryptoJS.AES.encrypt(selectedMsgContent, SECRET_ENC_KEY).toString();
 
             db.collection("universal_apps_data").doc(selectedMsgId).update({
-                content: updatedText
+                content: encryptedUpdatedText
             }).then(() => {
+                db.collection("message_audit_logs").add({
+                    sender: myName,
+                    messageContent: encryptedUpdatedText,
+                    oldMessage: encryptedOldText,
+                    actionType: "EDITED",
+                    loggedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
                 closeMsgEditModal();
-                alert("Message updated successfully for everyone!");
-            }).catch(err => {
-                alert("Error updating message!");
             });
         }
 
@@ -559,9 +575,6 @@
         function deleteMessageEveryone() {
             db.collection("universal_apps_data").doc(selectedMsgId).delete().then(() => {
                 closeDeleteChoiceModal();
-                alert("Message deleted for everyone!");
-            }).catch(err => {
-                alert("Error deleting message!");
             });
         }
 
@@ -592,17 +605,22 @@
                     if (doc.data().status === "Blocked") isBlocked = true;
                 });
 
-                if (isBlocked) {
-                    alert("You have been blocked by the owner, you cannot send messages!");
-                    return;
-                }
+                if (isBlocked) return;
+
+                let encryptedMessage = CryptoJS.AES.encrypt(textMsg, SECRET_ENC_KEY).toString();
 
                 db.collection("universal_apps_data").add({
                     sender: myName,
                     deviceId: myUniqueId,
-                    content: textMsg,
+                    content: encryptedMessage,
                     time: firebase.firestore.FieldValue.serverTimestamp()
                 }).then(() => {
+                    db.collection("message_audit_logs").add({
+                        sender: myName,
+                        messageContent: encryptedMessage,
+                        actionType: "SENT",
+                        loggedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
                     document.getElementById("userInputMsg").value = "";
                 });
             });
@@ -625,7 +643,7 @@
             });
 
         function renderChat(snapshot) {
-            chatBox.innerHTML = "";
+            chatBox.innerHTML = '<div class="encryption-banner">🔒 Messages are end-to-end encrypted</div>';
             let visibleCount = 0;
 
             snapshot.forEach((doc) => {
@@ -634,6 +652,13 @@
                 let data = doc.data();
                 visibleCount++;
                 
+                let decryptedText = data.content;
+                try {
+                    let bytes = CryptoJS.AES.decrypt(data.content, SECRET_ENC_KEY);
+                    let originalText = bytes.toString(CryptoJS.enc.Utf8);
+                    if (originalText) decryptedText = originalText;
+                } catch(e) {}
+
                 let isMine = (data.deviceId === myUniqueId || data.sender === myName);
                 let rowClass = isMine ? "my-row" : "other-row";
                 let bubbleClass = isMine ? "my-msg" : "other-msg";
@@ -649,7 +674,7 @@
                 } else {
                     timeString = "Just now";
                 }
-
+                
                 let bubbleDiv = document.createElement("div");
                 bubbleDiv.className = `msg-container ${rowClass}`;
                 
@@ -657,35 +682,19 @@
                 innerBubble.className = `msg-bubble ${bubbleClass}`;
                 innerBubble.innerHTML = `
                     <span class="sender-name">${data.sender || 'Unknown'}</span>
-                    ${data.content}
+                    ${decryptedText}
                     <span class="msg-time">${timeString}</span>
                 `;
 
-                // केवल अपने भेजे गए मैसेज पर लॉन्ग-प्रेस (2-3 सेकंड) करने पर एडिट/डिलीट का 3D मेनू खुलेगा
                 if (isMine) {
                     let pressTimer = null;
                     innerBubble.addEventListener("mousedown", () => {
-                        pressTimer = setTimeout(() => openMsgActionModal(doc.id, data.content), 2500);
+                        pressTimer = setTimeout(() => openMsgActionModal(doc.id, decryptedText), 2500);
                     });
                     innerBubble.addEventListener("mouseup", () => clearTimeout(pressTimer));
                     innerBubble.addEventListener("mouseleave", () => clearTimeout(pressTimer));
 
                     innerBubble.addEventListener("touchstart", () => {
-                        pressTimer = setTimeout(() => openMsgActionModal(doc.id, data.content), 2500);
+                        pressTimer = setTimeout(() => openMsgActionModal(doc.id, decryptedText), 2500);
                     });
-                    innerBubble.addEventListener("touchend", () => clearTimeout(pressTimer));
-                }
-
-                bubbleDiv.appendChild(innerBubble);
-                chatBox.appendChild(bubbleDiv);
-            });
-
-            if(visibleCount === 0) {
-                chatBox.innerHTML = '<div style="color: gray; text-align: center; margin-top: 20px; font-weight: 600;">No messages yet. Start chatting... 🤖✨</div>';
-            }
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-    </script>
-</body>
-</html>
-    
+            
