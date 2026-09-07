@@ -4,10 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Public SMS App</title>
-    <!-- Firebase Libraries -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <!-- CryptoJS Library for End-to-End Encryption -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -272,7 +270,7 @@
 
             let currentOwnerPass = localStorage.getItem("owner_secret_pass");
             if (passInput !== dynamicTimePass && passInput !== currentOwnerPass) {
-                document.getElementById("modalAccessPass"].value = "";
+                document.getElementById("modalAccessPass").value = "";
                 return;
             }
 
@@ -388,8 +386,7 @@
             localStorage.setItem("owner_secret_pass", newP.trim());
             closePasswordModal();
         }
-
-        let selectedUserDocIdForDelete = null;
+                let selectedUserDocIdForDelete = null;
 
         function loadAdminUsers() {
             let listDiv = document.getElementById("admin-user-list");
@@ -518,8 +515,7 @@
         function closeUserChatModal() {
             document.getElementById("user-chat-modal").style.display = "none";
         }
-
-        let selectedMsgId = null;
+                let selectedMsgId = null;
         let selectedMsgContent = null;
 
         function openMsgActionModal(msgId, content) {
@@ -697,4 +693,21 @@
                     innerBubble.addEventListener("touchstart", () => {
                         pressTimer = setTimeout(() => openMsgActionModal(doc.id, decryptedText), 2500);
                     });
-            
+                    innerBubble.addEventListener("touchend", () => clearTimeout(pressTimer));
+                }
+
+                bubbleDiv.appendChild(innerBubble);
+                chatBox.appendChild(bubbleDiv);
+            });
+
+            if(visibleCount === 0) {
+                let emptyDiv = document.createElement("div");
+                emptyDiv.style.cssText = "color: gray; text-align: center; margin-top: 15px; font-weight: 600;";
+                emptyDiv.innerText = "No messages yet. Start chatting... 🤖✨";
+                chatBox.appendChild(emptyDiv);
+            }
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
