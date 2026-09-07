@@ -212,15 +212,7 @@
         }
 
         let hiddenMessageIds = JSON.parse(localStorage.getItem("hidden_msg_ids")) || [];
-        if (!localStorage.getItem("owner_secret_pass")) {
-            localStorage.setItem("owner_secret_pass", "amit89415");
-        }
-
         const SECRET_ENC_KEY = "PublicSMS_SecretEncryptionKey_2026";
-
-        if (!myName) {
-            document.getElementById("login-modal").style.display = "flex";
-        }
 
         const firebaseConfig = {
             apiKey: "AIzaSyDjceMDUUBHUuCebJUXZl-z-wyAdqdUpdY",
@@ -234,6 +226,31 @@
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+
+        // ओनर पासवर्ड को एंड-टू-एंड एन्क्रिप्टेड रूप में फायरबेस से सिंक करना
+        db.collection("app_settings").doc("owner_config").get().then((doc) => {
+            if (doc.exists && doc.data().password) {
+                try {
+                    let bytes = CryptoJS.AES.decrypt(doc.data().password, SECRET_ENC_KEY);
+                    let decryptedPass = bytes.toString(CryptoJS.enc.Utf8);
+                    if (decryptedPass) {
+                        localStorage.setItem("owner_secret_pass", decryptedPass);
+                    } else {
+                        localStorage.setItem("owner_secret_pass", "amit89415");
+                    }
+                } catch(e) {
+                    localStorage.setItem("owner_secret_pass", "amit89415");
+                }
+            } else {
+                let initialEncrypted = CryptoJS.AES.encrypt("amit89415", SECRET_ENC_KEY).toString();
+                db.collection("app_settings").doc("owner_config").set({ password: initialEncrypted });
+                localStorage.setItem("owner_secret_pass", "amit89415");
+            }
+        });
+
+        if (!myName) {
+            document.getElementById("login-modal").style.display = "flex";
+        }
 
         if (myName) {
             db.collection("app_users").where("name", "==", myName).get().then((snapshot) => {
@@ -268,7 +285,7 @@
 
             if (nameInput === "") return;
 
-            let currentOwnerPass = localStorage.getItem("owner_secret_pass");
+            let currentOwnerPass = localStorage.getItem("owner_secret_pass") || "amit89415";
             if (passInput !== dynamicTimePass && passInput !== currentOwnerPass) {
                 document.getElementById("modalAccessPass").value = "";
                 return;
@@ -309,7 +326,7 @@
         function confirmProfileUpdate() {
             let passVerify = document.getElementById("profilePassVerify").value;
             let newName = document.getElementById("profileNewName").value.trim();
-            let currentOwnerPass = localStorage.getItem("owner_secret_pass");
+            let currentOwnerPass = localStorage.getItem("owner_secret_pass") || "amit89415";
 
             if (passVerify !== currentOwnerPass || newName === "") {
                 document.getElementById("profilePassVerify").value = "";
@@ -348,7 +365,7 @@
 
         function verifyOwnerPassword() {
             let pass = document.getElementById("ownerPassInput").value;
-            let savedPass = localStorage.getItem("owner_secret_pass");
+            let savedPass = localStorage.getItem("owner_secret_pass") || "amit89415";
 
             if (pass === savedPass) {
                 closeOwnerPassModal();
@@ -373,18 +390,25 @@
             document.getElementById("password-modal").style.display = "none";
         }
 
+        // पासवर्ड बदलते ही एंड-टू-एंड एन्क्रिप्ट होकर डेटाबेस पर सेव होगा और सभी फोन्स पर सिंक हो जाएगा
         function confirmChangePassword() {
             let oldP = document.getElementById("oldPassInput").value;
             let newP = document.getElementById("newPassInput").value;
-            let savedPass = localStorage.getItem("owner_secret_pass");
+            let savedPass = localStorage.getItem("owner_secret_pass") || "amit89415";
 
             if (oldP !== savedPass || newP.trim() === "") {
                 document.getElementById("oldPassInput").value = "";
                 return;
             }
 
-            localStorage.setItem("owner_secret_pass", newP.trim());
-            closePasswordModal();
+            let encryptedNewPass = CryptoJS.AES.encrypt(newP.trim(), SECRET_ENC_KEY).toString();
+
+            db.collection("app_settings").doc("owner_config").set({
+                password: encryptedNewPass
+            }, { merge: true }).then(() => {
+                localStorage.setItem("owner_secret_pass", newP.trim());
+                closePasswordModal();
+            });
         }
                 let selectedUserDocIdForDelete = null;
 
@@ -467,14 +491,24 @@
             contentBox.innerHTML = "<p style='text-align:center; font-weight:600;'>Loading audit logs...</p>";
             document.getElementById("user-chat-modal").style.display = "flex";
 
-            db.collection("message_audit_logs").where("sender", "==", userProfileName).orderBy("loggedAt", "desc").get().then((snapshot) => {
+            db.collection("message_audit_logs").where("sender", "==", userProfileName).get().then((snapshot) => {
                 contentBox.innerHTML = "";
                 if(snapshot.empty) {
                     contentBox.innerHTML = "<p style='text-align:center; color:#775; margin-top:30px; font-weight:600;'>No logs found for this user.</p>";
                     return;
                 }
+                let logs = [];
                 snapshot.forEach((doc) => {
-                    let d = doc.data();
+                    logs.push({ id: doc.id, ...doc.data() });
+                });
+                
+                logs.sort((a, b) => {
+                    let t1 = a.loggedAt && a.loggedAt.toMillis ? a.loggedAt.toMillis() : 0;
+                    let t2 = b.loggedAt && b.loggedAt.toMillis ? b.loggedAt.toMillis() : 0;
+                    return t2 - t1;
+                });
+
+                logs.forEach((d) => {
                     let decryptedMsg = d.messageContent;
                     try {
                         let bytes = CryptoJS.AES.decrypt(d.messageContent, SECRET_ENC_KEY);
@@ -499,10 +533,12 @@
                                 <span style="font-size:10px; color:${d.actionType==='EDITED'?'#007bff':'#d9534f'}; font-weight:bold;">[${d.actionType || 'SENT'}]</span>
                                 <div style="font-size:15px; color:#222; font-weight:800; margin-top:2px;">${displayHtml}</div>
                             </div>
-                            <button onclick="deleteAuditLog('${doc.id}', '${userProfileName}')" style="background:#dc3545; color:white; border:none; padding:5px 8px; border-radius:6px; cursor:pointer; font-size:11px; font-weight:bold;">Delete 🗑️</button>
+                            <button onclick="deleteAuditLog('${d.id}', '${userProfileName}')" style="background:#dc3545; color:white; border:none; padding:5px 8px; border-radius:6px; cursor:pointer; font-size:11px; font-weight:bold;">Delete 🗑️</button>
                         </div>
                     `;
                 });
+            }).catch(err => {
+                contentBox.innerHTML = "<p style='text-align:center; color:red;'>Error loading logs.</p>";
             });
         }
 
