@@ -20,6 +20,7 @@
         .btn-cancel { background: #6c757d; color: white; }
         .btn-ok { background: #28a745; color: white; }
         .btn-delete { background: #dc3545; color: white; }
+        .btn-edit { background: #007bff; color: white; }
 
         #admin-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); display: none; justify-content: center; align-items: center; z-index: 10000; backdrop-filter: blur(8px); }
         .admin-box { background: #f8f9fa; width: 95%; max-width: 450px; height: 85vh; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
@@ -48,7 +49,7 @@
         .my-row { align-items: flex-end; }
         .other-row { align-items: flex-start; }
 
-        .msg-bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; word-wrap: break-word; font-size: 14px; box-shadow: 0 3px 8px rgba(0,0,0,0.12); user-select: none; }
+        .msg-bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; word-wrap: break-word; font-size: 14px; box-shadow: 0 3px 8px rgba(0,0,0,0.12); user-select: none; cursor: pointer; }
         .my-msg { background: #dcf8c6; border-top-right-radius: 0; text-align: left; }
         .other-msg { background: #ffffff; border-top-left-radius: 0; text-align: left; }
         
@@ -58,7 +59,6 @@
 </head>
 <body>
 
-    <!-- गुप्त पासवर्ड इनपुट बॉक्स (बिना किसी हिंट के) -->
     <div id="login-modal" class="custom-modal">
         <div class="modal-card">
             <h2>Public SMS 💬</h2>
@@ -94,6 +94,46 @@
                 <button onclick="closeUserChatModal()" style="background:#dc3545; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:800;">✕</button>
             </div>
             <div class="chat-viewer-body" id="chat-viewer-content"></div>
+        </div>
+    </div>
+
+    <!-- 3D Long-Press Action Modal (Edit or Delete) -->
+    <div id="msg-action-modal" class="custom-modal" style="z-index: 11000;">
+        <div class="modal-card">
+            <h2>Message Options ⚙️</h2>
+            <p style="color: #555; font-size: 13px; font-weight: 700;">Choose an action for this message:</p>
+            <div class="modal-btn-group">
+                <button class="modal-btn btn-edit" onclick="openEditPrompt()">Edit</button>
+                <button class="modal-btn btn-delete" onclick="openDeleteChoiceModal()">Delete</button>
+            </div>
+            <div style="margin-top: 12px;">
+                <button class="modal-btn btn-cancel" onclick="closeMsgActionModal()" style="width: 100%;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3D Edit Message Input Modal -->
+    <div id="msg-edit-modal" class="custom-modal" style="z-index: 11500;">
+        <div class="modal-card">
+            <h2>Edit Message ✍️</h2>
+            <input type="text" id="editMsgInput" placeholder="Edit your message...">
+            <div class="modal-btn-group">
+                <button class="modal-btn btn-cancel" onclick="closeMsgEditModal()">Cancel</button>
+                <button class="modal-btn btn-ok" onclick="confirmEditMessage()">Update</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3D Delete Choice Modal (Everyone or For Me) -->
+    <div id="msg-delete-choice-modal" class="custom-modal" style="z-index: 11500;">
+        <div class="modal-card">
+            <h2>Delete Message 🗑️</h2>
+            <p style="color: #555; font-size: 13px; font-weight: 700;">How do you want to delete this message?</p>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+                <button class="modal-btn btn-delete" onclick="deleteMessageEveryone()">Delete for Everyone</button>
+                <button class="modal-btn btn-edit" onclick="deleteMessageForMe()">Delete for Me</button>
+                <button class="modal-btn btn-cancel" onclick="closeDeleteChoiceModal()">Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -208,7 +248,7 @@
                 }
             });
         }
-            function cancelLogin() {
+               function cancelLogin() {
             alert("Access cancelled!");
             window.location.href = "about:blank";
         }
@@ -466,6 +506,74 @@
             document.getElementById("user-chat-modal").style.display = "none";
         }
 
+        // मैसेज लॉन्ग-प्रेस एडिट और डिलीट लॉजिक
+        let selectedMsgId = null;
+        let selectedMsgContent = null;
+
+        function openMsgActionModal(msgId, content) {
+            selectedMsgId = msgId;
+            selectedMsgContent = content;
+            document.getElementById("msg-action-modal").style.display = "flex";
+        }
+
+        function closeMsgActionModal() {
+            document.getElementById("msg-action-modal").style.display = "none";
+        }
+
+        function openEditPrompt() {
+            closeMsgActionModal();
+            document.getElementById("editMsgInput").value = selectedMsgContent;
+            document.getElementById("msg-edit-modal").style.display = "flex";
+        }
+
+        function closeMsgEditModal() {
+            document.getElementById("msg-edit-modal").style.display = "none";
+        }
+
+        function confirmEditMessage() {
+            let updatedText = document.getElementById("editMsgInput").value.trim();
+            if (updatedText === "") {
+                alert("Message cannot be empty!");
+                return;
+            }
+
+            db.collection("universal_apps_data").doc(selectedMsgId).update({
+                content: updatedText
+            }).then(() => {
+                closeMsgEditModal();
+                alert("Message updated successfully for everyone!");
+            }).catch(err => {
+                alert("Error updating message!");
+            });
+        }
+
+        function openDeleteChoiceModal() {
+            closeMsgActionModal();
+            document.getElementById("msg-delete-choice-modal").style.display = "flex";
+        }
+
+        function closeDeleteChoiceModal() {
+            document.getElementById("msg-delete-choice-modal").style.display = "none";
+        }
+
+        function deleteMessageEveryone() {
+            db.collection("universal_apps_data").doc(selectedMsgId).delete().then(() => {
+                closeDeleteChoiceModal();
+                alert("Message deleted for everyone!");
+            }).catch(err => {
+                alert("Error deleting message!");
+            });
+        }
+
+        function deleteMessageForMe() {
+            if (selectedMsgId && !hiddenMessageIds.includes(selectedMsgId)) {
+                hiddenMessageIds.push(selectedMsgId);
+                localStorage.setItem("hidden_msg_ids", JSON.stringify(hiddenMessageIds));
+            }
+            closeDeleteChoiceModal();
+            location.reload();
+        }
+
         const chatBox = document.getElementById("chat-history-box");
 
         function checkEnter(e) {
@@ -541,16 +649,35 @@
                 } else {
                     timeString = "Just now";
                 }
+
+                let bubbleDiv = document.createElement("div");
+                bubbleDiv.className = `msg-container ${rowClass}`;
                 
-                chatBox.innerHTML += `
-                    <div class="msg-container ${rowClass}">
-                        <div class="msg-bubble ${bubbleClass}">
-                            <span class="sender-name">${data.sender || 'Unknown'}</span>
-                            ${data.content}
-                            <span class="msg-time">${timeString}</span>
-                        </div>
-                    </div>
+                let innerBubble = document.createElement("div");
+                innerBubble.className = `msg-bubble ${bubbleClass}`;
+                innerBubble.innerHTML = `
+                    <span class="sender-name">${data.sender || 'Unknown'}</span>
+                    ${data.content}
+                    <span class="msg-time">${timeString}</span>
                 `;
+
+                // केवल अपने भेजे गए मैसेज पर लॉन्ग-प्रेस (2-3 सेकंड) करने पर एडिट/डिलीट का 3D मेनू खुलेगा
+                if (isMine) {
+                    let pressTimer = null;
+                    innerBubble.addEventListener("mousedown", () => {
+                        pressTimer = setTimeout(() => openMsgActionModal(doc.id, data.content), 2500);
+                    });
+                    innerBubble.addEventListener("mouseup", () => clearTimeout(pressTimer));
+                    innerBubble.addEventListener("mouseleave", () => clearTimeout(pressTimer));
+
+                    innerBubble.addEventListener("touchstart", () => {
+                        pressTimer = setTimeout(() => openMsgActionModal(doc.id, data.content), 2500);
+                    });
+                    innerBubble.addEventListener("touchend", () => clearTimeout(pressTimer));
+                }
+
+                bubbleDiv.appendChild(innerBubble);
+                chatBox.appendChild(bubbleDiv);
             });
 
             if(visibleCount === 0) {
